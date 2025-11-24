@@ -1,0 +1,25 @@
+FLAZ — Biblioteca de ETL Espacial 3D+t para o FavelaVIZ
+Copyright (c) 2025 Fernando Gomes
+Todos os direitos reservados.
+
+Este produto inclui software desenvolvido por Fernando Gomes como parte da pesquisa
+acadêmica e tecnológica que originou o projeto FavelaVIZ e o ecossistema
+Open GeoData Cube (OGDC).
+
+O FLAZ é um formato modular, hierárquico e declarativo para representação,
+processamento e indexação de dados espaciais 3D+t, com foco especial nas
+morfologias urbanas das favelas brasileiras. Sua criação reflete anos de
+desenvolvimento técnico, pesquisa científica, experimentação computacional e
+compromisso ético com a cartografia crítica das periferias urbanas.
+
+Redistribuições deste software ou de trabalhos derivados devem manter este
+aviso de autoria, conforme os termos da Apache License 2.0.
+
+Este produto pode incluir componentes derivados de projetos de código aberto,
+incluindo (mas não se limitando a): Apache Arrow, PyArrow, GeoArrow, PDAL,
+Ray, NumPy, GDAL/PROJ e outras dependências declaradas. Estes componentes são
+utilizados sob suas respectivas licenças.
+
+Nenhum endosso ao FLAZ, ao FavelaVIZ, ao OGDC ou a Fernando Gomes é concedido ou
+implicado por terceiros que redistribuam este software em forma modificada.
+
