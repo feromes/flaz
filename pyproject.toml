@@ -1,0 +1,32 @@
+[project]
+name = "flaz"
+version = "0.1.0"
+description = "FLAZ — Biblioteca de ETL Espacial 3D+t para o FavelaVIZ"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [
+  { name = "Fernando Gomes", email = "feromes@gmail.com" }
+]
+requires-python = ">=3.10"
+dependencies = [
+  "pyarrow>=16.0.0",
+  "numpy>=1.26",
+  "rich>=13.0",
+  "shapely>=2.0.0",
+  "pyproj>=3.6",
+  "requests>=2.32",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+  "pytest-cov",
+  "black",
+  "isort",
+  "mypy",
+  "ruff",
+]
+
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
