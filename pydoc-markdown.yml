@@ -6,4 +6,3 @@ loaders:
 renderer:
   type: markdown
   output_directory: docs/docs/api
-

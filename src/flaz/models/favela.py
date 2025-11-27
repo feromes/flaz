@@ -4,6 +4,26 @@ from importlib.resources import files
 import geopandas as gpd
 
 class Favela:
+    """""
+    Classe para representar uma favela e suas operações associadas.
+    Attributes
+    ----------
+    nome : str
+        
+        Nome da favela.
+        db_path : Path
+        Caminho para o banco de dados de favelas.
+        Methods
+        -------
+        periodo(ano: int) -> Favela
+            
+            Define o ano de interesse para a favela.
+            load_points() -> None
+            Carrega os pontos 3D da favela.
+            calc_hag() -> pa.Table
+                
+        Calcula a altura acima do terreno (HAG) para os pontos da favela.
+    """
     def __init__(self, nome: str, db_path: Path = None):
         self.nome = nome
         self._ano = None
