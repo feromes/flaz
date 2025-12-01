@@ -1,9 +1,12 @@
+# flaz/__init__.py
 from .models.favela import Favela
 from .models.favelas import Favelas
-from .models.fviz import FViz
+from .models.flaz_core import FLaz
+from .flaz_io import FlazIO  # import relativo dentro do pacote
 
 __all__ = [
     "Favela",
     "Favelas",
-    "FViz",
+    "FLaz",
+    "FlazIO",
 ]
