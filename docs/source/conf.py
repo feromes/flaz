@@ -14,9 +14,14 @@ author = 'Fernando Gomes'
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
+    "myst_parser",
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",   # permite docstring Google/NumPy
     "sphinx_autodoc_typehints",
+]
+
+myst_enable_extensions = [
+    "colon_fence",
 ]
 
 

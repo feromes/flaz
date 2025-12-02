@@ -10,7 +10,7 @@ Ele **não** contém lógica científica de cálculo.
 Apenas resolve **onde estão os dados**.
 """
 
-# from .flaz_io import FlazIO
+from .flaz_io import FlazIO
 from .lidar_index import LiDARIndex, build_default_lidar_index
 
 # ---------------------------------------------------------------------

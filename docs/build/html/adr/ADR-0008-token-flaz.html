@@ -1,0 +1,739 @@
+
+<!DOCTYPE html>
+
+
+<html lang="pt-BR" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>ADR-0008 — O Formato .flaz como Token Espacial Vivo (128 bits) &#8212; Documentação Flaz </title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../_static/documentation_options.js?v=8946c2f5"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/translations.js?v=71a39b36"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'adr/ADR-0008-token-flaz';</script>
+    <link rel="index" title="Índice" href="../genindex.html" />
+    <link rel="search" title="Buscar" href="../search.html" />
+    <link rel="prev" title="ADR-0007 — Licenciamento e Governança do Ecossistema FLAZ/FVIZ/FavelaViz" href="ADR-0007-licenciamento.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="pt-BR"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Documentação Flaz </p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ADR-0000-manifesto-adr.html">
+    ADR-0000 — Adoção de Architecture Decision Records (ADRs)
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ADR-0001-morton-128bits.html">
+    ADR-0001 — Adoção de Morton (Z-Order) como estrutura hierárquica do formato .flaz
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ADR-0002-parquet-arrow.html">
+    ADR-0002 — Adoção de Parquet/Arrow como formato persistido oficial do FLAZ
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ADR-0003-plugin-system.html">
+    ADR-0003 — Sistema de Plugins _calc_* como mecanismo oficial de operações do FLAZ
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ADR-0004-etlva.html">
+    ADR-0004 — Adoção do modelo ETLVA como espinha dorsal conceitual do FLAZ
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button"
+                data-bs-toggle="dropdown" aria-expanded="false"
+                aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ADR-0005-verbility.html">
+    ADR-0005 — Adoção da gramática Verbility como sistema de habilidades do FLAZ
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ADR-0006-arquitetura-declarativa.html">
+    ADR-0006 — Adoção da Arquitetura Declarativa (Capabilities → Operations → Layers)
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ADR-0007-licenciamento.html">
+    ADR-0007 — Licenciamento e Governança do Ecossistema FLAZ/FVIZ/FavelaViz
+  </a>
+</li>
+
+
+<li class=" current active">
+  <a class="nav-link dropdown-item nav-internal" href="#">
+    ADR-0008 — O Formato .flaz como Token Espacial Vivo (128 bits)
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Buscar" aria-label="Buscar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Buscar</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Buscar" aria-label="Buscar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Buscar</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ADR-0000-manifesto-adr.html">
+    ADR-0000 — Adoção de Architecture Decision Records (ADRs)
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ADR-0001-morton-128bits.html">
+    ADR-0001 — Adoção de Morton (Z-Order) como estrutura hierárquica do formato .flaz
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ADR-0002-parquet-arrow.html">
+    ADR-0002 — Adoção de Parquet/Arrow como formato persistido oficial do FLAZ
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ADR-0003-plugin-system.html">
+    ADR-0003 — Sistema de Plugins _calc_* como mecanismo oficial de operações do FLAZ
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ADR-0004-etlva.html">
+    ADR-0004 — Adoção do modelo ETLVA como espinha dorsal conceitual do FLAZ
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ADR-0005-verbility.html">
+    ADR-0005 — Adoção da gramática Verbility como sistema de habilidades do FLAZ
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ADR-0006-arquitetura-declarativa.html">
+    ADR-0006 — Adoção da Arquitetura Declarativa (Capabilities → Operations → Layers)
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ADR-0007-licenciamento.html">
+    ADR-0007 — Licenciamento e Governança do Ecossistema FLAZ/FVIZ/FavelaViz
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="#">
+    ADR-0008 — O Formato .flaz como Token Espacial Vivo (128 bits)
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"></div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">ADR-0008 — O Formato <code class="docutils literal notranslate"><span class="pre">.flaz</span></code> como Token Espacial Vivo (128 bits)</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="adr-0008-o-formato-flaz-como-token-espacial-vivo-128-bits">
+<h1>ADR-0008 — O Formato <code class="docutils literal notranslate"><span class="pre">.flaz</span></code> como Token Espacial Vivo (128 bits)<a class="headerlink" href="#adr-0008-o-formato-flaz-como-token-espacial-vivo-128-bits" title="Link para este cabeçalho">#</a></h1>
+<section id="status">
+<h2>Status<a class="headerlink" href="#status" title="Link para este cabeçalho">#</a></h2>
+<p>Accepted</p>
+</section>
+<section id="contexto">
+<h2>Contexto<a class="headerlink" href="#contexto" title="Link para este cabeçalho">#</a></h2>
+<p>O FLAZ não nasceu como “mais um arquivo geoespacial”.<br />
+Ele nasceu como <strong>uma nova forma de pensar o espaço-tempo urbano</strong>, principalmente no contexto de nuvens de pontos LiDAR, análises 3D+t e pipelines distribuídos.</p>
+<p>Os formatos tradicionais — LAZ, COPC, Parquet, Arrow, GeoParquet — cumprem papéis essenciais, mas nenhum deles:</p>
+<ul class="simple">
+<li><p>incorpora <strong>hierarquia espacial intrínseca</strong>;</p></li>
+<li><p>combina <strong>dimensões 3D + tempo</strong> em um único átomo;</p></li>
+<li><p>representa o espaço como um <strong>endereço codificável, navegável, paginável</strong>;</p></li>
+<li><p>permite <strong>ranges</strong> contínuos para armazenamento distribuído;</p></li>
+<li><p>unifica <strong>ETL → visualização → análise</strong>;</p></li>
+<li><p>funciona como chave primária universal para cidades 3D+t.</p></li>
+</ul>
+<p>A solução emergiu naturalmente:<br />
+<strong>o <code class="docutils literal notranslate"><span class="pre">.flaz</span></code> não seria apenas um arquivo — seria um <em>token espacial vivo</em>.</strong></p>
+<p>Um identificador compacto, determinístico, hierárquico e temporal que carrega dentro de si a “gramática do lugar”.</p>
+</section>
+<hr class="docutils" />
+<section id="decisao">
+<h2>Decisão<a class="headerlink" href="#decisao" title="Link para este cabeçalho">#</a></h2>
+<p>O formato <code class="docutils literal notranslate"><span class="pre">.flaz</span></code> é definido como um <strong>token de 128 bits</strong>, composto por:</p>
+<ul class="simple">
+<li><p><strong>96 bits espaciais</strong> (Morton 3D)</p></li>
+<li><p><strong>32 bits temporais</strong> (epoch, frame ou timestamp normalizado)</p></li>
+</ul>
+<p>Esse token é:</p>
+<ul class="simple">
+<li><p>ordenável</p></li>
+<li><p>hierárquico</p></li>
+<li><p>comparável</p></li>
+<li><p>cruzável entre favelas, cidades e épocas</p></li>
+<li><p>adequado para particionamento distribuído</p></li>
+<li><p>transportável entre linguagens (Python, JS/TS, Rust, SQL)</p></li>
+<li><p>capaz de ser indexado, filtrado, agrupado e animado</p></li>
+</ul>
+<section id="estrutura">
+<h3>Estrutura<a class="headerlink" href="#estrutura" title="Link para este cabeçalho">#</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span> <span class="n">MortonX</span> <span class="o">|</span> <span class="n">MortonY</span> <span class="o">|</span> <span class="n">MortonZ</span> <span class="o">|</span> <span class="n">Time</span> <span class="p">]</span>
+</pre></div>
+</div>
+<p>Ao invés de armazenar “coordenadas e atributos”, o <code class="docutils literal notranslate"><span class="pre">.flaz</span></code> armazena <strong>unidades vivas</strong> de espaço-tempo.</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="propriedades-chave">
+<h2>Propriedades-chave<a class="headerlink" href="#propriedades-chave" title="Link para este cabeçalho">#</a></h2>
+<section id="hierarquia-espacial-fractal">
+<h3>1. <strong>Hierarquia espacial fractal</strong><a class="headerlink" href="#hierarquia-espacial-fractal" title="Link para este cabeçalho">#</a></h3>
+<p>Mais bits → maior resolução<br />
+Menos bits → agregações naturais</p>
+<p>Isso permite:</p>
+<ul class="simple">
+<li><p>pirâmides nativas</p></li>
+<li><p>downsampling sem perda semântica</p></li>
+<li><p>vizinhanças baratas</p></li>
+<li><p>ranges espaciais contínuos</p></li>
+</ul>
+</section>
+<section id="temporalidade-integrada">
+<h3>2. <strong>Temporalidade integrada</strong><a class="headerlink" href="#temporalidade-integrada" title="Link para este cabeçalho">#</a></h3>
+<p>O token já sabe:</p>
+<ul class="simple">
+<li><p>a época (2017/2020/2024)</p></li>
+<li><p>a ordem dos frames</p></li>
+<li><p>o momento relativo de aquisição</p></li>
+</ul>
+<p>Isso é essencial para:</p>
+<ul class="simple">
+<li><p>multitemporalidade do FavelaViz</p></li>
+<li><p>animações 3D+t</p></li>
+<li><p>reconstruções espaço-temporais</p></li>
+<li><p>alinhamento de dados LiDAR com RGB/MDS</p></li>
+</ul>
+</section>
+<section id="determinismo-absoluto">
+<h3>3. <strong>Determinismo absoluto</strong><a class="headerlink" href="#determinismo-absoluto" title="Link para este cabeçalho">#</a></h3>
+<p>Dado um ponto XYZ+t → sempre gera o mesmo token<br />
+Dado um token → sempre recupera seu endereço</p>
+<p>Isso torna o <code class="docutils literal notranslate"><span class="pre">.flaz</span></code>:</p>
+<ul class="simple">
+<li><p>replicável,</p></li>
+<li><p>versionável,</p></li>
+<li><p>auditável.</p></li>
+</ul>
+</section>
+<section id="distribuicao-nativa-ogdc-ready">
+<h3>4. <strong>Distribuição nativa (OGDC-ready)</strong><a class="headerlink" href="#distribuicao-nativa-ogdc-ready" title="Link para este cabeçalho">#</a></h3>
+<p>Ranges de tokens permitem:</p>
+<ul class="simple">
+<li><p>particionamento horizontal</p></li>
+<li><p>shards temporais</p></li>
+<li><p>workers paralelos</p></li>
+<li><p>processamento por tiles virtuais</p></li>
+<li><p>compatibilidade com Cloud Run, Ray e OGDC futuro</p></li>
+</ul>
+</section>
+<section id="interoperabilidade">
+<h3>5. <strong>Interoperabilidade</strong><a class="headerlink" href="#interoperabilidade" title="Link para este cabeçalho">#</a></h3>
+<p>O token <code class="docutils literal notranslate"><span class="pre">.flaz</span></code> viaja perfeitamente entre:</p>
+<ul class="simple">
+<li><p>Python (ETL)</p></li>
+<li><p>TypeScript (visualização)</p></li>
+<li><p>SQL/PostGIS (indexação)</p></li>
+<li><p>Zarr/Arrow/Parquet (storage)</p></li>
+</ul>
+</section>
+</section>
+<hr class="docutils" />
+<section id="alternativas-consideradas">
+<h2>Alternativas consideradas<a class="headerlink" href="#alternativas-consideradas" title="Link para este cabeçalho">#</a></h2>
+<section id="usar-apenas-morton-2d">
+<h3>1. Usar apenas Morton 2D<a class="headerlink" href="#usar-apenas-morton-2d" title="Link para este cabeçalho">#</a></h3>
+<p>Limitaria o projeto; perderíamos profundidade vertical.</p>
+</section>
+<section id="usar-h3-s2">
+<h3>2. Usar H3/S2<a class="headerlink" href="#usar-h3-s2" title="Link para este cabeçalho">#</a></h3>
+<p>Excelentes para 2D, mas não para 3D+t; exigiriam hacks complexos para Z e tempo.</p>
+</section>
+<section id="usar-guid-uuid">
+<h3>3. Usar GUID/UUID<a class="headerlink" href="#usar-guid-uuid" title="Link para este cabeçalho">#</a></h3>
+<p>Perderíamos completude semântica e ordenação espacial.</p>
+</section>
+<section id="usar-parquet-cru-como-formato-final">
+<h3>4. Usar Parquet “cru” como formato final<a class="headerlink" href="#usar-parquet-cru-como-formato-final" title="Link para este cabeçalho">#</a></h3>
+<p>Parquet é armazenamento, não ontologia.<br />
+Faltaria a “alma fractal” do FLAZ.</p>
+</section>
+<section id="usar-copc-como-base">
+<h3>5. Usar COPC como base<a class="headerlink" href="#usar-copc-como-base" title="Link para este cabeçalho">#</a></h3>
+<p>COPC é perfeito para <em>storage</em> de nuvens brutas, mas não para semânticas, tokens, layers, animações.</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="consequencias">
+<h2>Consequências<a class="headerlink" href="#consequencias" title="Link para este cabeçalho">#</a></h2>
+<section id="positivas">
+<h3>Positivas<a class="headerlink" href="#positivas" title="Link para este cabeçalho">#</a></h3>
+<ul class="simple">
+<li><p>padronização conceitual do FLAZ como linguagem</p></li>
+<li><p>tokens unificados em todo o ecossistema</p></li>
+<li><p>pipeline ETLVA simplificado</p></li>
+<li><p>animações e ranges espaciais triviais</p></li>
+<li><p>compatibilidade direta com OGDC</p></li>
+<li><p>fácil de reproduzir cientificamente</p></li>
+<li><p>reduz acoplamento entre camadas (ETL/Viewer/Storage)</p></li>
+<li><p>compressão semântica poderosa (128 bits carregam tudo)</p></li>
+</ul>
+</section>
+<section id="negativas">
+<h3>Negativas<a class="headerlink" href="#negativas" title="Link para este cabeçalho">#</a></h3>
+<ul class="simple">
+<li><p>exige implementação consistente em Python e TypeScript</p></li>
+<li><p>precisa de testes rigorosos de bitwise e decodificação</p></li>
+<li><p>documentação precisa detalhar invariantes do token</p></li>
+</ul>
+</section>
+</section>
+<hr class="docutils" />
+<section id="notas-finais">
+<h2>Notas finais<a class="headerlink" href="#notas-finais" title="Link para este cabeçalho">#</a></h2>
+<p>O <code class="docutils literal notranslate"><span class="pre">.flaz</span></code> não é apenas um “arquivo”.</p>
+<p>Ele é a <strong>unidade mínima da geografia operacional do projeto</strong>,<br />
+um átomo hierárquico que carrega:</p>
+<ul class="simple">
+<li><p>espaço</p></li>
+<li><p>tempo</p></li>
+<li><p>vizinhança</p></li>
+<li><p>escala</p></li>
+<li><p>resoluções múltiplas</p></li>
+<li><p>navegabilidade</p></li>
+<li><p>consistência universal</p></li>
+</ul>
+<p>É o tijolo conceitual que permite que:</p>
+<blockquote>
+<div><p><strong>o FLAZ seja não um formato, mas uma linguagem viva do espaço-tempo.</strong></p>
+</div></blockquote>
+<p>A cidade não é salva como dados —<br />
+é salva como <em>geometria simbólica</em>.</p>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="ADR-0007-licenciamento.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">anterior</p>
+        <p class="prev-next-title">ADR-0007 — Licenciamento e Governança do Ecossistema FLAZ/FVIZ/FavelaViz</p>
+      </div>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#status">Status</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#contexto">Contexto</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#decisao">Decisão</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#estrutura">Estrutura</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#propriedades-chave">Propriedades-chave</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#hierarquia-espacial-fractal">1. <strong>Hierarquia espacial fractal</strong></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#temporalidade-integrada">2. <strong>Temporalidade integrada</strong></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#determinismo-absoluto">3. <strong>Determinismo absoluto</strong></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#distribuicao-nativa-ogdc-ready">4. <strong>Distribuição nativa (OGDC-ready)</strong></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#interoperabilidade">5. <strong>Interoperabilidade</strong></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#alternativas-consideradas">Alternativas consideradas</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#usar-apenas-morton-2d">1. Usar apenas Morton 2D</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#usar-h3-s2">2. Usar H3/S2</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#usar-guid-uuid">3. Usar GUID/UUID</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#usar-parquet-cru-como-formato-final">4. Usar Parquet “cru” como formato final</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#usar-copc-como-base">5. Usar COPC como base</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#consequencias">Consequências</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#positivas">Positivas</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#negativas">Negativas</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#notas-finais">Notas finais</a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+  <div role="note" aria-label="source link">
+    <h3>Essa Página</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/adr/ADR-0008-token-flaz.md.txt"
+            rel="nofollow">Exibir Fonte</a></li>
+    </ul>
+   </div></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2025, Fernando Gomes.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Criada usando <a href="https://www.sphinx-doc.org/pt_BR/master">Sphinx</a> 8.2.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

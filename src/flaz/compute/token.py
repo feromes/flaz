@@ -23,7 +23,7 @@ def calc(
     >>> points = f._load_points()
     >>> points.num_rows
     28142130
-
+    
     Parameters
     ----------
     cloud : geopandas.GeoDataFrame

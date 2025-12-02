@@ -1,0 +1,1113 @@
+
+<!DOCTYPE html>
+
+
+<html lang="pt-BR" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>FLAZ — Documentação &#8212; Documentação Flaz </title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="_static/documentation_options.js?v=8946c2f5"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/translations.js?v=71a39b36"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'index';</script>
+    <link rel="index" title="Índice" href="genindex.html" />
+    <link rel="search" title="Buscar" href="search.html" />
+    <link rel="next" title="ADR-0000 — Adoção de Architecture Decision Records (ADRs)" href="adr/ADR-0000-manifesto-adr.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="pt-BR"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="#">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Documentação Flaz </p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="adr/ADR-0000-manifesto-adr.html">
+    ADR-0000 — Adoção de Architecture Decision Records (ADRs)
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="adr/ADR-0001-morton-128bits.html">
+    ADR-0001 — Adoção de Morton (Z-Order) como estrutura hierárquica do formato .flaz
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="adr/ADR-0002-parquet-arrow.html">
+    ADR-0002 — Adoção de Parquet/Arrow como formato persistido oficial do FLAZ
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="adr/ADR-0003-plugin-system.html">
+    ADR-0003 — Sistema de Plugins _calc_* como mecanismo oficial de operações do FLAZ
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="adr/ADR-0004-etlva.html">
+    ADR-0004 — Adoção do modelo ETLVA como espinha dorsal conceitual do FLAZ
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button"
+                data-bs-toggle="dropdown" aria-expanded="false"
+                aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="adr/ADR-0005-verbility.html">
+    ADR-0005 — Adoção da gramática Verbility como sistema de habilidades do FLAZ
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="adr/ADR-0006-arquitetura-declarativa.html">
+    ADR-0006 — Adoção da Arquitetura Declarativa (Capabilities → Operations → Layers)
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="adr/ADR-0007-licenciamento.html">
+    ADR-0007 — Licenciamento e Governança do Ecossistema FLAZ/FVIZ/FavelaViz
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="adr/ADR-0008-token-flaz.html">
+    ADR-0008 — O Formato .flaz como Token Espacial Vivo (128 bits)
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Buscar" aria-label="Buscar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Buscar</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Buscar" aria-label="Buscar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Buscar</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="adr/ADR-0000-manifesto-adr.html">
+    ADR-0000 — Adoção de Architecture Decision Records (ADRs)
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="adr/ADR-0001-morton-128bits.html">
+    ADR-0001 — Adoção de Morton (Z-Order) como estrutura hierárquica do formato .flaz
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="adr/ADR-0002-parquet-arrow.html">
+    ADR-0002 — Adoção de Parquet/Arrow como formato persistido oficial do FLAZ
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="adr/ADR-0003-plugin-system.html">
+    ADR-0003 — Sistema de Plugins _calc_* como mecanismo oficial de operações do FLAZ
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="adr/ADR-0004-etlva.html">
+    ADR-0004 — Adoção do modelo ETLVA como espinha dorsal conceitual do FLAZ
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="adr/ADR-0005-verbility.html">
+    ADR-0005 — Adoção da gramática Verbility como sistema de habilidades do FLAZ
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="adr/ADR-0006-arquitetura-declarativa.html">
+    ADR-0006 — Adoção da Arquitetura Declarativa (Capabilities → Operations → Layers)
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="adr/ADR-0007-licenciamento.html">
+    ADR-0007 — Licenciamento e Governança do Ecossistema FLAZ/FVIZ/FavelaViz
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="adr/ADR-0008-token-flaz.html">
+    ADR-0008 — O Formato .flaz como Token Espacial Vivo (128 bits)
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none"></div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="flaz-documentacao">
+<h1>FLAZ — Documentação<a class="headerlink" href="#flaz-documentacao" title="Link para este cabeçalho">#</a></h1>
+<div class="toctree-wrapper compound">
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Architecture Decision Records</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="adr/ADR-0000-manifesto-adr.html">ADR-0000 — Adoção de Architecture Decision Records (ADRs)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="adr/ADR-0001-morton-128bits.html">ADR-0001 — Adoção de Morton (Z-Order) como estrutura hierárquica do formato <code class="docutils literal notranslate"><span class="pre">.flaz</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="adr/ADR-0002-parquet-arrow.html">ADR-0002 — Adoção de Parquet/Arrow como formato persistido oficial do FLAZ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="adr/ADR-0003-plugin-system.html">ADR-0003 — Sistema de Plugins <code class="docutils literal notranslate"><span class="pre">_calc_*</span></code> como mecanismo oficial de operações do FLAZ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="adr/ADR-0004-etlva.html">ADR-0004 — Adoção do modelo ETLVA como espinha dorsal conceitual do FLAZ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="adr/ADR-0005-verbility.html">ADR-0005 — Adoção da gramática Verbility como sistema de habilidades do FLAZ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="adr/ADR-0006-arquitetura-declarativa.html">ADR-0006 — Adoção da Arquitetura Declarativa (Capabilities → Operations → Layers)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="adr/ADR-0007-licenciamento.html">ADR-0007 — Licenciamento e Governança do Ecossistema FLAZ/FVIZ/FavelaViz</a></li>
+<li class="toctree-l1"><a class="reference internal" href="adr/ADR-0008-token-flaz.html">ADR-0008 — O Formato <code class="docutils literal notranslate"><span class="pre">.flaz</span></code> como Token Espacial Vivo (128 bits)</a></li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+</div>
+<section id="module-flaz">
+<span id="api"></span><h2>API<a class="headerlink" href="#module-flaz" title="Link para este cabeçalho">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="flaz.FLaz">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">flaz.</span></span><span class="sig-name descname"><span class="pre">FLaz</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">geom</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">binfile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#flaz.FLaz" title="Link para esta definição">#</a></dt>
+<dd><p>Base: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Objeto fundamental do ecossistema FLAZ.</p>
+<p>A classe <a class="reference internal" href="#flaz.FLaz" title="flaz.FLaz"><code class="xref py py-class docutils literal notranslate"><span class="pre">FLaz</span></code></a> representa a menor unidade coerente de dado espacial
+no sistema: um artefato geoespacial persistente que combina:</p>
+<ul class="simple">
+<li><p>Geometria (2D, 3D ou 3D+t)</p></li>
+<li><p>Metadados semânticos, provenientes de seu contexto territorial de origem (ex: favela, distrito)</p></li>
+<li><p>Representação binária otimizada para leitura, recorte e visualização</p></li>
+</ul>
+<p>Conceitualmente, o <a class="reference internal" href="#flaz.FLaz" title="flaz.FLaz"><code class="xref py py-class docutils literal notranslate"><span class="pre">FLaz</span></code></a> ocupa um papel análogo ao de um
+<code class="xref py py-class docutils literal notranslate"><span class="pre">geopandas.GeoDataFrame</span></code>, porém com foco em:</p>
+<ul class="simple">
+<li><p>Grandes volumes de dados</p></li>
+<li><p>Representações multiescala</p></li>
+<li><p>Fluxos ETL reprodutíveis</p></li>
+<li><p>Visualização 3D+t</p></li>
+<li><p>Análise morfológica urbana</p></li>
+</ul>
+<p>Um objeto <a class="reference internal" href="#flaz.FLaz" title="flaz.FLaz"><code class="xref py py-class docutils literal notranslate"><span class="pre">FLaz</span></code></a> pode ser entendido como um <a href="#id1"><span class="problematic" id="id2">**</span></a>token espacial vivo*
+ele não é apenas um arquivo, mas uma entidade operável, versionável e
+atravessável por múltiplas camadas do sistema (ETL, visualização, análise,
+machine learning).</p>
+<p>A criação de um <a class="reference internal" href="#flaz.FLaz" title="flaz.FLaz"><code class="xref py py-class docutils literal notranslate"><span class="pre">FLaz</span></code></a> pode ocorrer por leitura direta de um arquivo
+ou URL:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">flaz</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#f = flaz.read(&quot;http://www.seila.com/fernando.flaz&quot;)</span>
+</pre></div>
+</div>
+<p>Ou por construção manual a partir de geometria e seu contexto:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1">#f = FLaz(geom=geom, meta=favela.meta)</span>
+</pre></div>
+</div>
+<section id="relacao-com-outras-classes">
+<h3>Relação com outras classes:<a class="headerlink" href="#relacao-com-outras-classes" title="Link para este cabeçalho">#</a></h3>
+<ul class="simple">
+<li><p><a class="reference internal" href="#flaz.Favela" title="flaz.Favela"><code class="xref py py-class docutils literal notranslate"><span class="pre">Favela</span></code></a> é uma interpretação territorial original e semântica de um candidato à, ou containner de um ou mais
+objetos <a class="reference internal" href="#flaz.FLaz" title="flaz.FLaz"><code class="xref py py-class docutils literal notranslate"><span class="pre">FLaz</span></code></a>.</p></li>
+<li><p><a class="reference internal" href="#flaz.Favelas" title="flaz.Favelas"><code class="xref py py-class docutils literal notranslate"><span class="pre">Favelas</span></code></a> é um agregador de múltiplas instâncias <a class="reference internal" href="#flaz.Favela" title="flaz.Favela"><code class="xref py py-class docutils literal notranslate"><span class="pre">Favela</span></code></a>.</p></li>
+<li><p><a class="reference internal" href="#flaz.FLaz" title="flaz.FLaz"><code class="xref py py-class docutils literal notranslate"><span class="pre">FLaz</span></code></a> <strong>não depende semanticamente de Favela</strong>, mas pode ser usado
+por ela como fonte de dados brutos.</p></li>
+</ul>
+</section>
+<section id="atributos-principais">
+<h3>Atributos principais:<a class="headerlink" href="#atributos-principais" title="Link para este cabeçalho">#</a></h3>
+<dl class="simple">
+<dt>geom<span class="classifier">objeto geométrico</span></dt><dd><p>Geometria associada ao artefato (polígono, pontos, voxel, etc.).</p>
+</dd>
+<dt>meta<span class="classifier">dict</span></dt><dd><p>Metadados descritivos, técnicos e científicos do objeto.</p>
+</dd>
+</dl>
+</section>
+<section id="exemplos-de-uso-no-ecossistema">
+<h3>Exemplos de uso no ecossistema:<a class="headerlink" href="#exemplos-de-uso-no-ecossistema" title="Link para este cabeçalho">#</a></h3>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">flaz</span><span class="w"> </span><span class="kn">import</span> <span class="n">Favela</span><span class="p">,</span> <span class="n">Favelas</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">flaz</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#f = flaz.read(&quot;http://www.seila.com/fernando.flaz&quot;)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#fl = Favela(&quot;São Remo&quot;).hag(force_recalc=True)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#fls_nn5 = fl.hag().nearest_neighbors(k=5)</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#for f in fls_nn5:</span>
+<span class="go"># ...     print(f.nome, f.area_construida())</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#fls = Favelas(distritos=[&quot;Cidade Ademar&quot;, &quot;Grajaú&quot;])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#for f in fls:</span>
+<span class="go"># ...     print(f.nome)</span>
+</pre></div>
+</div>
+</section>
+<section id="filosofia-de-design">
+<h3>Filosofia de design:<a class="headerlink" href="#filosofia-de-design" title="Link para este cabeçalho">#</a></h3>
+<ul class="simple">
+<li><p>A classe <a class="reference internal" href="#flaz.FLaz" title="flaz.FLaz"><code class="xref py py-class docutils literal notranslate"><span class="pre">FLaz</span></code></a> é deliberadamente minimalista.</p></li>
+<li><p>Não carrega semântica urbana por padrão.</p></li>
+<li><p>É orientada a <strong>dados, não a narrativas</strong>.</p></li>
+<li><p>Toda semântica (favela, distrito, período, índices, métricas)
+emerge em camadas superiores.</p></li>
+</ul>
+<p>Ela pode ser <strong>tudo ou nada</strong>, mas nunca deve ser ambígua:
+ou representa um artefato espacial válido, ou falha de forma explícita.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="flaz.FLaz.DEFAULT_CRS">
+<span class="sig-name descname"><span class="pre">DEFAULT_CRS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'EPSG:4326'</span></em><a class="headerlink" href="#flaz.FLaz.DEFAULT_CRS" title="Link para esta definição">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="flaz.FLaz.DEFAULT_DRIVER">
+<span class="sig-name descname"><span class="pre">DEFAULT_DRIVER</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'flaz.v1'</span></em><a class="headerlink" href="#flaz.FLaz.DEFAULT_DRIVER" title="Link para esta definição">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="flaz.FLaz.FORMAT">
+<span class="sig-name descname"><span class="pre">FORMAT</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'FLAZ'</span></em><a class="headerlink" href="#flaz.FLaz.FORMAT" title="Link para esta definição">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="flaz.FLaz.REQUIRED_META_FIELDS">
+<span class="sig-name descname"><span class="pre">REQUIRED_META_FIELDS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'crs',</span> <span class="pre">'data',</span> <span class="pre">'nome',</span> <span class="pre">'origem'}</span></em><a class="headerlink" href="#flaz.FLaz.REQUIRED_META_FIELDS" title="Link para esta definição">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="flaz.FLaz.STRICT">
+<span class="sig-name descname"><span class="pre">STRICT</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#flaz.FLaz.STRICT" title="Link para esta definição">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="flaz.FLaz.VERSION">
+<span class="sig-name descname"><span class="pre">VERSION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'0.1.0'</span></em><a class="headerlink" href="#flaz.FLaz.VERSION" title="Link para esta definição">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="flaz.FLaz.nome">
+<span class="sig-name descname"><span class="pre">nome</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#flaz.FLaz.nome" title="Link para esta definição">#</a></dt>
+<dd><p>Retorna o nome do objeto FLaz a partir dos metadados.</p>
+</dd></dl>
+
+</section>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="flaz.Favela">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">flaz.</span></span><span class="sig-name descname"><span class="pre">Favela</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nome</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#flaz.Favela" title="Link para esta definição">#</a></dt>
+<dd><p>Base: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Representa uma favela específica, com funcionalidades para carregar dados
+e calcular atributos relevantes.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">flaz</span><span class="w"> </span><span class="kn">import</span> <span class="n">Favela</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span> <span class="o">=</span> <span class="n">Favela</span><span class="p">(</span><span class="s2">&quot;São Remo&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">area</span>  <span class="c1"># GeoDataFrame com a geometria da favela</span>
+<span class="go">82629.24619930894</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="flaz.Favela.calc_flaz">
+<span class="sig-name descname"><span class="pre">calc_flaz</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">force_recalc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#flaz.Favela.calc_flaz" title="Link para esta definição">#</a></dt>
+<dd><p>Materializa a nuvem de pontos sob o formato de um token FLaz mínimo da favela.
+Este é o ponto de entrada ontológico de todo o pipeline.
+Após a execução, o resultado fica disponível em:</p>
+<blockquote>
+<div><p>self.flaz</p>
+</div></blockquote>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">flaz</span><span class="w"> </span><span class="kn">import</span> <span class="n">Favela</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span> <span class="o">=</span> <span class="n">Favela</span><span class="p">(</span><span class="s2">&quot;São Remo&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">periodo</span><span class="p">(</span><span class="mi">2017</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="o">.</span><span class="n">calc_flaz</span><span class="p">()</span><span class="o">.</span><span class="n">num_points</span>
+<span class="go">28142130</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="flaz.Favela.calc_mds">
+<span class="sig-name descname"><span class="pre">calc_mds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_recalc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#flaz.Favela.calc_mds" title="Link para esta definição">#</a></dt>
+<dd><p>Calcula o Modelo Digital de Superfície (MDS) da favela.</p>
+<dl class="simple">
+<dt>Após a execução, o resultado fica disponível em:</dt><dd><p>self.mds</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="flaz.Favela.calc_vielas">
+<span class="sig-name descname"><span class="pre">calc_vielas</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">6.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#flaz.Favela.calc_vielas" title="Link para esta definição">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="flaz.Favela.num_points">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">num_points</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#flaz.Favela.num_points" title="Link para esta definição">#</a></dt>
+<dd><p>Número de pontos da nuvem associada à favela.
+Só existe após o calc_flaz().</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="flaz.Favela.periodo">
+<span class="sig-name descname"><span class="pre">periodo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ano</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#flaz.Favela.periodo" title="Link para esta definição">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="flaz.Favela.persist">
+<span class="sig-name descname"><span class="pre">persist</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">uri</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#flaz.Favela.persist" title="Link para esta definição">#</a></dt>
+<dd><p>Persiste o objeto Favela atual em disco, incluindo todas as camadas
+calculadas (mds, hag, vielas, flaz, etc).</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">flaz</span><span class="w"> </span><span class="kn">import</span> <span class="n">Favela</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span> <span class="o">=</span> <span class="n">Favela</span><span class="p">(</span><span class="s2">&quot;São Remo&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">periodo</span><span class="p">(</span><span class="mi">2017</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">uri</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">calc_flaz</span><span class="p">()</span><span class="o">.</span><span class="n">persist</span><span class="p">(</span><span class="s2">&quot;temp://sao_remo_2017.parquet&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parâmetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>path</strong> (<em>Path</em>) – Caminho do arquivo .parquet a ser salvo.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="flaz.Favela.quadriculas_laz">
+<span class="sig-name descname"><span class="pre">quadriculas_laz</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#flaz.Favela.quadriculas_laz" title="Link para esta definição">#</a></dt>
+<dd><p>”
+Retorna as quadículas LAZ associadas à favela, dada uma articulação de arquivos LAZ/COPC/EPT.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">flaz</span><span class="w"> </span><span class="kn">import</span> <span class="n">Favela</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span> <span class="o">=</span> <span class="n">Favela</span><span class="p">(</span><span class="s2">&quot;São Remo&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">periodo</span><span class="p">(</span><span class="mi">2024</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">quadriculas_laz</span><span class="p">())</span>
+<span class="go">2</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">periodo</span><span class="p">(</span><span class="mi">2017</span><span class="p">)</span><span class="o">.</span><span class="n">quadriculas_laz</span><span class="p">())</span>
+<span class="go">4</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="flaz.Favelas">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">flaz.</span></span><span class="sig-name descname"><span class="pre">Favelas</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">favelas</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distritos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sub_prefeituras</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">db_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#flaz.Favelas" title="Link para esta definição">#</a></dt>
+<dd><p>Base: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Representa um conjunto de favelas, permitindo iteração e acesso a cada
+instância de <a class="reference internal" href="#flaz.Favela" title="flaz.Favela"><code class="xref py py-class docutils literal notranslate"><span class="pre">Favela</span></code></a>.</p>
+<p>A classe de FAvelas representa inicialmente os dados baixados do GeoSampa com as
+geometrias das favelas da cidade de São Paulo.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">flaz</span><span class="w"> </span><span class="kn">import</span> <span class="n">Favelas</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">favelas</span> <span class="o">=</span> <span class="n">Favelas</span><span class="p">([</span><span class="s2">&quot;São Remo&quot;</span><span class="p">,</span> <span class="s2">&quot;Paraisópolis&quot;</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">favelas</span><span class="p">)</span>
+<span class="go">2</span>
+</pre></div>
+</div>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="flaz.Favelas.FAVELAS_MORE">
+<span class="sig-name descname"><span class="pre">FAVELAS_MORE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['Heliópolis',</span> <span class="pre">'Cocaia</span> <span class="pre">I',</span> <span class="pre">'Paraisópolis',</span> <span class="pre">'Futuro</span> <span class="pre">Melhor',</span> <span class="pre">'São</span> <span class="pre">Remo']</span></em><a class="headerlink" href="#flaz.Favelas.FAVELAS_MORE" title="Link para esta definição">#</a></dt>
+<dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">favelas</span> <span class="o">=</span> <span class="n">Favelas</span><span class="p">(</span><span class="n">favelas</span><span class="o">=</span><span class="n">Favelas</span><span class="o">.</span><span class="n">FAVELAS_MORE</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">favela</span> <span class="ow">in</span> <span class="n">favelas</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">favela</span><span class="o">.</span><span class="n">nome</span><span class="p">)</span>
+<span class="go">Heliópolis</span>
+<span class="go">Cocaia I</span>
+<span class="go">Paraisópolis</span>
+<span class="go">Futuro Melhor</span>
+<span class="go">São Remo</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="flaz.FlazIO">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">flaz.</span></span><span class="sig-name descname"><span class="pre">FlazIO</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">b2_key_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b2_app_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">endpoint_url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'https://s3.us-east-005.backblazeb2.com'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#flaz.FlazIO" title="Link para esta definição">#</a></dt>
+<dd><p>Base: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Classe que encapsula operações de leitura e escrita para objetos <cite>.flaz</cite>.</p>
+<p>A classe utiliza fsspec/s3fs para lidar com sistemas de arquivos remotos
+compatíveis com S3, como Backblaze B2, e opera com formatos de dados
+diversos (por exemplo, JSON, Parquet, LAZ) de forma unificada.</p>
+<section id="parametros">
+<h3>Parâmetros<a class="headerlink" href="#parametros" title="Link para este cabeçalho">#</a></h3>
+<dl class="simple">
+<dt>b2_key_id<span class="classifier">Optional[str]</span></dt><dd><p>ID da chave de aplicação B2 (se não especificado, será lido de
+<code class="docutils literal notranslate"><span class="pre">B2_KEY_ID</span></code> na variável de ambiente).</p>
+</dd>
+<dt>b2_app_key<span class="classifier">Optional[str]</span></dt><dd><p>Chave secreta da aplicação B2 (se não especificado, será lido de
+<code class="docutils literal notranslate"><span class="pre">B2_APP_KEY</span></code> na variável de ambiente).</p>
+</dd>
+<dt>endpoint_url<span class="classifier">str, opcional</span></dt><dd><p>URL do endpoint S3‑compatível do B2.  O padrão
+<code class="docutils literal notranslate"><span class="pre">https://s3.us-east-005.backblazeb2.com</span></code> é usado se nenhum valor
+for fornecido.</p>
+</dd>
+</dl>
+</section>
+<section id="atributos">
+<h3>Atributos<a class="headerlink" href="#atributos" title="Link para este cabeçalho">#</a></h3>
+<dl class="simple">
+<dt>fs<span class="classifier">Optional[s3fs.S3FileSystem]</span></dt><dd><p>Instância de sistema de arquivos S3 configurada com as credenciais B2.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="flaz.FlazIO.read">
+<span class="sig-name descname"><span class="pre">read</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">uri</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#flaz.FlazIO.read" title="Link para esta definição">#</a></dt>
+<dd><p>Lê um objeto <cite>.flaz</cite> de um URI local ou remoto.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Tipo de retorno<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></span></p>
+</dd>
+</dl>
+<section id="id3">
+<h4>Parâmetros<a class="headerlink" href="#id3" title="Link para este cabeçalho">#</a></h4>
+<dl class="simple">
+<dt>uri<span class="classifier">str</span></dt><dd><p>Caminho para o arquivo .flaz. Pode ser um caminho local ou um
+URI com prefixo <code class="docutils literal notranslate"><span class="pre">s3://</span></code> apontando para um bucket compatível com S3.</p>
+</dd>
+</dl>
+</section>
+<section id="retorna">
+<h4>Retorna<a class="headerlink" href="#retorna" title="Link para este cabeçalho">#</a></h4>
+<dl class="simple">
+<dt>Any</dt><dd><p>Representação carregada do objeto .flaz. Neste esboço, retorna uma
+estrutura placeholder; na implementação real, devolverá um objeto
+específico que expõe métodos como <cite>.favela()</cite>.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="flaz.FlazIO.up_s3">
+<span class="sig-name descname"><span class="pre">up_s3</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dest_uri</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#flaz.FlazIO.up_s3" title="Link para esta definição">#</a></dt>
+<dd><p>Faz upload do resultado de processamento para um bucket S3/B2.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Tipo de retorno<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</span></p>
+</dd>
+</dl>
+<section id="id4">
+<h4>Parâmetros<a class="headerlink" href="#id4" title="Link para este cabeçalho">#</a></h4>
+<dl class="simple">
+<dt>dest_uri<span class="classifier">str, opcional</span></dt><dd><p>URI de destino (prefixo <code class="docutils literal notranslate"><span class="pre">s3://</span></code>) para onde os dados devem ser
+enviados. Se None, utiliza um caminho padrão definido internamente.</p>
+</dd>
+</dl>
+</section>
+<section id="id5">
+<h4>Retorna<a class="headerlink" href="#id5" title="Link para este cabeçalho">#</a></h4>
+<dl class="simple">
+<dt>Tuple[bool, str]</dt><dd><p>Um tuplo (sucesso, mensagem) indicando se o upload ocorreu com
+sucesso e contendo um status ou mensagem de erro.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+</section>
+</dd></dl>
+
+</section>
+</section>
+<section id="module-flaz.flaz_io">
+<span id="flazio"></span><h1>FlazIO<a class="headerlink" href="#module-flaz.flaz_io" title="Link para este cabeçalho">#</a></h1>
+<p>flaz_io – módulo de I/O para arquivos e objetos .flaz.</p>
+<p>Este módulo define a classe FlazIO, responsável por ler e escrever dados
+relacionados ao formato <cite>.flaz</cite>.  A classe abstrai o acesso tanto a sistemas
+de arquivos locais quanto a serviços de armazenamento compatíveis com S3,
+permitindo que o consumidor decida, no momento da leitura ou escrita,
+se os dados serão manipulados localmente ou na nuvem.</p>
+<p>Exemplo de uso:</p>
+<blockquote>
+<div><p>from flaz_io import FlazIO</p>
+<p># Lê um arquivo .flaz do bucket B2 (S3-compatível)
+fio = FlazIO()
+flaz_obj = fio.read(“s3://meu-bucket/exemplo.flaz”)</p>
+<p># Acessa um recurso dentro do objeto .flaz (por exemplo, uma favela)
+favela = flaz_obj.favela()
+favela.load_laz(“./nuvem.copc.laz”)
+favela.calc_hag(force_recalc=True)</p>
+<p># Envia o resultado de volta para o bucket B2
+upload_result, status = fio.up_s3(“s3://meu-bucket/resultado/”)</p>
+</div></blockquote>
+<dl class="py class">
+<dt class="sig sig-object py" id="flaz.flaz_io.FlazIO">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">flaz.flaz_io.</span></span><span class="sig-name descname"><span class="pre">FlazIO</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">b2_key_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b2_app_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">endpoint_url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'https://s3.us-east-005.backblazeb2.com'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#flaz.flaz_io.FlazIO" title="Link para esta definição">#</a></dt>
+<dd><p>Base: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Classe que encapsula operações de leitura e escrita para objetos <cite>.flaz</cite>.</p>
+<p>A classe utiliza fsspec/s3fs para lidar com sistemas de arquivos remotos
+compatíveis com S3, como Backblaze B2, e opera com formatos de dados
+diversos (por exemplo, JSON, Parquet, LAZ) de forma unificada.</p>
+<section id="id6">
+<h2>Parâmetros<a class="headerlink" href="#id6" title="Link para este cabeçalho">#</a></h2>
+<dl class="simple">
+<dt>b2_key_id<span class="classifier">Optional[str]</span></dt><dd><p>ID da chave de aplicação B2 (se não especificado, será lido de
+<code class="docutils literal notranslate"><span class="pre">B2_KEY_ID</span></code> na variável de ambiente).</p>
+</dd>
+<dt>b2_app_key<span class="classifier">Optional[str]</span></dt><dd><p>Chave secreta da aplicação B2 (se não especificado, será lido de
+<code class="docutils literal notranslate"><span class="pre">B2_APP_KEY</span></code> na variável de ambiente).</p>
+</dd>
+<dt>endpoint_url<span class="classifier">str, opcional</span></dt><dd><p>URL do endpoint S3‑compatível do B2.  O padrão
+<code class="docutils literal notranslate"><span class="pre">https://s3.us-east-005.backblazeb2.com</span></code> é usado se nenhum valor
+for fornecido.</p>
+</dd>
+</dl>
+</section>
+<section id="id7">
+<h2>Atributos<a class="headerlink" href="#id7" title="Link para este cabeçalho">#</a></h2>
+<dl class="simple">
+<dt>fs<span class="classifier">Optional[s3fs.S3FileSystem]</span></dt><dd><p>Instância de sistema de arquivos S3 configurada com as credenciais B2.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="flaz.flaz_io.FlazIO.read">
+<span class="sig-name descname"><span class="pre">read</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">uri</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#flaz.flaz_io.FlazIO.read" title="Link para esta definição">#</a></dt>
+<dd><p>Lê um objeto <cite>.flaz</cite> de um URI local ou remoto.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Tipo de retorno<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></span></p>
+</dd>
+</dl>
+<section id="id8">
+<h3>Parâmetros<a class="headerlink" href="#id8" title="Link para este cabeçalho">#</a></h3>
+<dl class="simple">
+<dt>uri<span class="classifier">str</span></dt><dd><p>Caminho para o arquivo .flaz. Pode ser um caminho local ou um
+URI com prefixo <code class="docutils literal notranslate"><span class="pre">s3://</span></code> apontando para um bucket compatível com S3.</p>
+</dd>
+</dl>
+</section>
+<section id="id9">
+<h3>Retorna<a class="headerlink" href="#id9" title="Link para este cabeçalho">#</a></h3>
+<dl class="simple">
+<dt>Any</dt><dd><p>Representação carregada do objeto .flaz. Neste esboço, retorna uma
+estrutura placeholder; na implementação real, devolverá um objeto
+específico que expõe métodos como <cite>.favela()</cite>.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="flaz.flaz_io.FlazIO.up_s3">
+<span class="sig-name descname"><span class="pre">up_s3</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dest_uri</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#flaz.flaz_io.FlazIO.up_s3" title="Link para esta definição">#</a></dt>
+<dd><p>Faz upload do resultado de processamento para um bucket S3/B2.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Tipo de retorno<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</span></p>
+</dd>
+</dl>
+<section id="id10">
+<h3>Parâmetros<a class="headerlink" href="#id10" title="Link para este cabeçalho">#</a></h3>
+<dl class="simple">
+<dt>dest_uri<span class="classifier">str, opcional</span></dt><dd><p>URI de destino (prefixo <code class="docutils literal notranslate"><span class="pre">s3://</span></code>) para onde os dados devem ser
+enviados. Se None, utiliza um caminho padrão definido internamente.</p>
+</dd>
+</dl>
+</section>
+<section id="id11">
+<h3>Retorna<a class="headerlink" href="#id11" title="Link para este cabeçalho">#</a></h3>
+<dl class="simple">
+<dt>Tuple[bool, str]</dt><dd><p>Um tuplo (sucesso, mensagem) indicando se o upload ocorreu com
+sucesso e contendo um status ou mensagem de erro.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+</section>
+</dd></dl>
+
+</section>
+<section id="module-flaz.compute.token">
+<span id="flaz-favela-laziness-index"></span><h1>FLAZ — Favela Laziness Index<a class="headerlink" href="#module-flaz.compute.token" title="Link para este cabeçalho">#</a></h1>
+<p>Materialização mínima de um token FLaz a partir de uma nuvem de pontos.</p>
+<p>Este módulo contém apenas a lógica de criação de um objeto FLaz a partir de
+dados brutos. Não conhece Favela, cache, I/O ou camadas semânticas.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="flaz.compute.token.calc">
+<span class="sig-prename descclassname"><span class="pre">flaz.compute.token.</span></span><span class="sig-name descname"><span class="pre">calc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cloud</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Separador de parâmetros somente-nomeados (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">meta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#flaz.compute.token.calc" title="Link para esta definição">#</a></dt>
+<dd><p>Cria um objeto FLaz mínimo a partir de uma nuvem de pontos.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">flaz</span><span class="w"> </span><span class="kn">import</span> <span class="n">Favela</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span> <span class="o">=</span> <span class="n">Favela</span><span class="p">(</span><span class="s2">&quot;São Remo&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">periodo</span><span class="p">(</span><span class="mi">2017</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">points</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">_load_points</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">points</span><span class="o">.</span><span class="n">num_rows</span>
+<span class="go">28142130</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parâmetros<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cloud</strong> (<em>geopandas.GeoDataFrame</em>) – Nuvem de pontos bruta (LAZ/COPC já convertida para GeoDataFrame).</p></li>
+<li><p><strong>meta</strong> (<em>dict</em><em>, </em><em>optional</em>) – Metadados mínimos a serem associados ao token FLaz.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Retorna<span class="colon">:</span></dt>
+<dd class="field-even"><p>Instância mínima de FLaz materializada.</p>
+</dd>
+<dt class="field-odd">Tipo de retorno<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#flaz.FLaz" title="flaz.FLaz">flaz.FLaz</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-flaz.compute.mds">
+<span id="mds-modelo-digital-de-superficie"></span><h1>MDS - Modelo Digital de Superfície<a class="headerlink" href="#module-flaz.compute.mds" title="Link para este cabeçalho">#</a></h1>
+<p>Cálculo de MDS — Modelo Digital de Superfície.</p>
+<p>Recebe pontos em formato tabular (pyarrow ou numpy) e devolve
+uma nuvem agregada representando a superfície superior.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="flaz.compute.mds.calc">
+<span class="sig-prename descclassname"><span class="pre">flaz.compute.mds.</span></span><span class="sig-name descname"><span class="pre">calc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Separador de parâmetros somente-nomeados (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'x'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'y'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'z'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#flaz.compute.mds.calc" title="Link para esta definição">#</a></dt>
+<dd><p>Calcula o Modelo Digital de Superfície (MDS).</p>
+<p>Agrupa os pontos em uma malha regular e extrai o Z máximo por célula.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parâmetros<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>points</strong> (<em>pyarrow.Table</em>) – Tabela com colunas x, y, z.</p></li>
+<li><p><strong>resolution</strong> (<em>float</em>) – Tamanho da célula do grid.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Retorna<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tabela com colunas: x, y, z (z = máximo por célula).</p>
+</dd>
+<dt class="field-odd">Tipo de retorno<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pyarrow.Table</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-flaz.compute.hag">
+<span id="hag-height-above-ground"></span><h1>HAG — Height Above Ground<a class="headerlink" href="#module-flaz.compute.hag" title="Link para este cabeçalho">#</a></h1>
+<p>Cálculo de Height Above Ground (HAG).</p>
+<p>Este módulo contém apenas a lógica numérica pura do cálculo de HAG.
+Não conhece Favela, Flaz, cache ou camadas semânticas.
+Ele apenas recebe dados e devolve dados.</p>
+<dl class="simple">
+<dt>Uso típico:</dt><dd><p>from flaz.compute.hag import calc as compute_hag</p>
+</dd>
+</dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="flaz.compute.hag.calc">
+<span class="sig-prename descclassname"><span class="pre">flaz.compute.hag.</span></span><span class="sig-name descname"><span class="pre">calc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ground</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Separador de parâmetros somente-nomeados (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">z_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'z'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'hag'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#flaz.compute.hag.calc" title="Link para esta definição">#</a></dt>
+<dd><p>Calcula Height Above Ground (HAG) para uma nuvem de pontos.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parâmetros<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>points</strong> (<em>geopandas.GeoDataFrame</em>) – GeoDataFrame contendo os pontos 3D da nuvem.
+A coordenada Z deve estar disponível via <cite>geometry.z</cite>
+ou explicitamente em uma coluna informada em <cite>z_col</cite>.</p></li>
+<li><p><strong>ground</strong> (<em>geopandas.GeoDataFrame</em>) – GeoDataFrame representando o solo (MDT/MDS filtrado).
+Neste esqueleto, assume-se que a cota do solo pode ser
+aproximada por uma estatística simples (ex: média).</p></li>
+<li><p><strong>z_col</strong> (<em>str</em><em>, </em><em>default=&quot;z&quot;</em>) – Nome da coluna que contém a cota Z, caso não esteja em geometry.z.</p></li>
+<li><p><strong>out_col</strong> (<em>str</em><em>, </em><em>default=&quot;hag&quot;</em>) – Nome da coluna onde o HAG será armazenado no resultado.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Retorna<span class="colon">:</span></dt>
+<dd class="field-even"><p>Cópia de <cite>points</cite> com uma nova coluna <cite>out_col</cite> contendo
+a altura relativa ao solo (HAG).</p>
+</dd>
+<dt class="field-odd">Tipo de retorno<span class="colon">:</span></dt>
+<dd class="field-odd"><p>geopandas.GeoDataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="right-next"
+       href="adr/ADR-0000-manifesto-adr.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">próximo</p>
+        <p class="prev-next-title">ADR-0000 — Adoção de Architecture Decision Records (ADRs)</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#">FLAZ — Documentação</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-flaz">API</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#flaz.FLaz"><code class="docutils literal notranslate"><span class="pre">FLaz</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#flaz.FLaz.DEFAULT_CRS"><code class="docutils literal notranslate"><span class="pre">FLaz.DEFAULT_CRS</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#flaz.FLaz.DEFAULT_DRIVER"><code class="docutils literal notranslate"><span class="pre">FLaz.DEFAULT_DRIVER</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#flaz.FLaz.FORMAT"><code class="docutils literal notranslate"><span class="pre">FLaz.FORMAT</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#flaz.FLaz.REQUIRED_META_FIELDS"><code class="docutils literal notranslate"><span class="pre">FLaz.REQUIRED_META_FIELDS</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#flaz.FLaz.STRICT"><code class="docutils literal notranslate"><span class="pre">FLaz.STRICT</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#flaz.FLaz.VERSION"><code class="docutils literal notranslate"><span class="pre">FLaz.VERSION</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#flaz.FLaz.nome"><code class="docutils literal notranslate"><span class="pre">FLaz.nome()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#flaz.Favela"><code class="docutils literal notranslate"><span class="pre">Favela</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#flaz.Favela.calc_flaz"><code class="docutils literal notranslate"><span class="pre">Favela.calc_flaz()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#flaz.Favela.calc_mds"><code class="docutils literal notranslate"><span class="pre">Favela.calc_mds()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#flaz.Favela.calc_vielas"><code class="docutils literal notranslate"><span class="pre">Favela.calc_vielas()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#flaz.Favela.num_points"><code class="docutils literal notranslate"><span class="pre">Favela.num_points</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#flaz.Favela.periodo"><code class="docutils literal notranslate"><span class="pre">Favela.periodo()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#flaz.Favela.persist"><code class="docutils literal notranslate"><span class="pre">Favela.persist()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#flaz.Favela.quadriculas_laz"><code class="docutils literal notranslate"><span class="pre">Favela.quadriculas_laz()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#flaz.Favelas"><code class="docutils literal notranslate"><span class="pre">Favelas</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#flaz.Favelas.FAVELAS_MORE"><code class="docutils literal notranslate"><span class="pre">Favelas.FAVELAS_MORE</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#flaz.FlazIO"><code class="docutils literal notranslate"><span class="pre">FlazIO</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#flaz.FlazIO.read"><code class="docutils literal notranslate"><span class="pre">FlazIO.read()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#flaz.FlazIO.up_s3"><code class="docutils literal notranslate"><span class="pre">FlazIO.up_s3()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#module-flaz.flaz_io">FlazIO</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#flaz.flaz_io.FlazIO"><code class="docutils literal notranslate"><span class="pre">FlazIO</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#flaz.flaz_io.FlazIO.read"><code class="docutils literal notranslate"><span class="pre">FlazIO.read()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#flaz.flaz_io.FlazIO.up_s3"><code class="docutils literal notranslate"><span class="pre">FlazIO.up_s3()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#module-flaz.compute.token">FLAZ — Favela Laziness Index</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#flaz.compute.token.calc"><code class="docutils literal notranslate"><span class="pre">calc()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#module-flaz.compute.mds">MDS - Modelo Digital de Superfície</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#flaz.compute.mds.calc"><code class="docutils literal notranslate"><span class="pre">calc()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#module-flaz.compute.hag">HAG — Height Above Ground</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#flaz.compute.hag.calc"><code class="docutils literal notranslate"><span class="pre">calc()</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+  <div role="note" aria-label="source link">
+    <h3>Essa Página</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/index.rst.txt"
+            rel="nofollow">Exibir Fonte</a></li>
+    </ul>
+   </div></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2025, Fernando Gomes.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Criada usando <a href="https://www.sphinx-doc.org/pt_BR/master">Sphinx</a> 8.2.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

@@ -8,6 +8,7 @@ from flaz.compute import compute_flaz
 from flaz.io import LIDAR_INDEX
 import laspy
 import numpy as np
+from flaz.io import FlazIO
 
 
 class Favela:
@@ -25,15 +26,39 @@ class Favela:
         self._ano = None
         self.geometry = self._load_geom_from_package()
 
-    def calc_flaz(self, force_recalc: bool = False):
+    def __str__(self):
+        return f"Favela(nome='{self.nome}')"
+    
+    @property
+    def num_points(self) -> int:
+        """
+        Número de pontos da nuvem associada à favela.
+        Só existe após o calc_flaz().
+        """
+        if not hasattr(self, "flaz") or self.flaz is None:
+            return 0  # ontologicamente: ainda não há nuvem materializada
+        return self.table.num_rows
 
+    def calc_flaz(self, force_recalc: bool = False):
+        """
+        Materializa a nuvem de pontos sob o formato de um token FLaz mínimo da favela.
+        Este é o ponto de entrada ontológico de todo o pipeline.
+        Após a execução, o resultado fica disponível em:
+            self.flaz
+
+        >>> from flaz import Favela
+        >>> f = Favela("São Remo").periodo(2017)
+        >>> f.calc_flaz().num_points
+        28142130
+
+        """
         if hasattr(self, "flaz") and not force_recalc:
             return self
 
-        arrow_table = self._load_points()
+        self.table = self._load_points()
 
         self.flaz = compute_flaz(
-            arrow_table,
+            self,
             meta=getattr(self, "meta", {}),
         )
 
@@ -42,32 +67,56 @@ class Favela:
 
         return self
 
+    def persist(self, uri: str):
+        """
+        Persiste o objeto Favela atual em disco, incluindo todas as camadas
+        calculadas (mds, hag, vielas, flaz, etc).
+
+        >>> from flaz import Favela
+        >>> f = Favela("São Remo").periodo(2017)
+        >>> uri = f.calc_flaz().persist("temp://sao_remo_2017.parquet")
+
+        Parameters
+        ----------
+        path : Path
+            Caminho do arquivo .parquet a ser salvo.
+        """
+
+        io = FlazIO()
+        final_path = io.write_favela(self, uri)
+        return final_path
+
     def periodo(self, ano: int):
         self._ano = ano
         return self
-
-    def calc_hag(self, force_recalc: bool = False):
+    
+    def calc_mds(self, resolution: float = 0.5, force_recalc: bool = False):
         """
-        Calcula a camada Height Above Ground (HAG) da favela.
+        Calcula o Modelo Digital de Superfície (MDS) da favela.
 
         Após a execução, o resultado fica disponível em:
-            self.hag
+            self.mds
         """
 
         # 1. Cache
-        if hasattr(self, "hag") and not force_recalc:
+        if hasattr(self, "mds") and not force_recalc:
             return self
 
         # 2. Carrega insumos
         points = self.load_points()
-        ground = self.load_ground()
 
         # 3. Cálculo puro
-        self.hag = compute_hag(points, ground)
+        self.mds = compute_mds(
+            points,
+            resolution=resolution,
+            x_col="x",
+            y_col="y",
+            z_col="z",
+        )
 
         # 4. Registro da camada (se existir)
         if hasattr(self, "_register_layer"):
-            self._register_layer("hag")
+            self._register_layer("mds")
 
         return self
 

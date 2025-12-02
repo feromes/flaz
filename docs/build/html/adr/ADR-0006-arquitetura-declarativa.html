@@ -1,0 +1,590 @@
+
+<!DOCTYPE html>
+
+
+<html lang="pt-BR" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>ADR-0006 — Adoção da Arquitetura Declarativa (Capabilities → Operations → Layers) &#8212; Documentação Flaz </title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../_static/documentation_options.js?v=8946c2f5"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/translations.js?v=71a39b36"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'adr/ADR-0006-arquitetura-declarativa';</script>
+    <link rel="index" title="Índice" href="../genindex.html" />
+    <link rel="search" title="Buscar" href="../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="pt-BR"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Documentação Flaz </p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ADR-0000-manifesto-adr.html">
+    ADR-0000 — Adoção de Architecture Decision Records (ADRs)
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ADR-0001-morton-128bits.html">
+    ADR-0001 — Adoção de Morton (Z-Order) como estrutura hierárquica do formato .flaz
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Buscar" aria-label="Buscar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Buscar</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Buscar" aria-label="Buscar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Buscar</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ADR-0000-manifesto-adr.html">
+    ADR-0000 — Adoção de Architecture Decision Records (ADRs)
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ADR-0001-morton-128bits.html">
+    ADR-0001 — Adoção de Morton (Z-Order) como estrutura hierárquica do formato .flaz
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">ADR-0006 — Adoção da Arquitetura Declarativa (Capabilities → Operations → Layers)</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="adr-0006-adocao-da-arquitetura-declarativa-capabilities-operations-layers">
+<h1>ADR-0006 — Adoção da Arquitetura Declarativa (Capabilities → Operations → Layers)<a class="headerlink" href="#adr-0006-adocao-da-arquitetura-declarativa-capabilities-operations-layers" title="Link para este cabeçalho">#</a></h1>
+<section id="status">
+<h2>Status<a class="headerlink" href="#status" title="Link para este cabeçalho">#</a></h2>
+<p>Accepted</p>
+</section>
+<section id="contexto">
+<h2>Contexto<a class="headerlink" href="#contexto" title="Link para este cabeçalho">#</a></h2>
+<p>Durante a evolução do FLAZ, ficou evidente que o projeto não poderia ser organizado apenas como um conjunto de funções soltas ou métodos dentro de uma única classe.<br />
+O FLAZ opera em múltiplas escalas, temporalidades e domínios:</p>
+<ul class="simple">
+<li><p>extração (Extract)</p></li>
+<li><p>transformação (Transform)</p></li>
+<li><p>persistência (Load)</p></li>
+<li><p>visualização (Visualize)</p></li>
+<li><p>animação (Animate)</p></li>
+</ul>
+<p>Com isso surgiram inúmeras operações — HAG, MDT/MDS, Vielas, FFT, Sunibility, Windibility, Hazard Fields, embeddings, etc.<br />
+Era necessário um modelo estrutural simples e expansível que:</p>
+<ul class="simple">
+<li><p>organizasse semanticamente o que o FLAZ pode fazer,</p></li>
+<li><p>isolasse operações,</p></li>
+<li><p>mantivesse o núcleo pequeno,</p></li>
+<li><p>preservasse coerência,</p></li>
+<li><p>fosse compatível com ETLVA,</p></li>
+<li><p>estruturasse a documentação e a API.</p></li>
+</ul>
+<p>Daí emergiu a arquitetura declarativa:</p>
+<p><strong>Capabilities → Operations → Layers</strong></p>
+<p>Ela organiza não só o código, mas a própria ontologia do FLAZ.</p>
+</section>
+<hr class="docutils" />
+<section id="decisao">
+<h2>Decisão<a class="headerlink" href="#decisao" title="Link para este cabeçalho">#</a></h2>
+<p>O FLAZ adotará a seguinte arquitetura declarativa triádica:</p>
+<hr class="docutils" />
+<section id="capabilities">
+<h3>1. <strong>Capabilities</strong><a class="headerlink" href="#capabilities" title="Link para este cabeçalho">#</a></h3>
+<p>São as <strong>possibilidades semânticas</strong> do FLAZ — o que ele é capaz de fazer.<br />
+Exemplos:</p>
+<ul class="simple">
+<li><p>“Calcular HAG é uma capability.”</p></li>
+<li><p>“Extrair vielas é uma capability.”</p></li>
+<li><p>“Gerar FFT espacial é uma capability.”</p></li>
+</ul>
+<p>Capabilities representam <strong>o que é possível</strong>, não o como fazer.</p>
+</section>
+<hr class="docutils" />
+<section id="operations">
+<h3>2. <strong>Operations</strong><a class="headerlink" href="#operations" title="Link para este cabeçalho">#</a></h3>
+<p>São as <strong>implementações concretas</strong> das capacidades.<br />
+Cada operação é um módulo isolado com uma função <code class="docutils literal notranslate"><span class="pre">_calc_*</span></code>.</p>
+<p>Exemplos:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">_calc_hag</span><span class="p">()</span>
+<span class="n">_calc_vielas</span><span class="p">()</span>
+<span class="n">_calc_fft</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Cada operação:</p>
+<ul class="simple">
+<li><p>vive em <code class="docutils literal notranslate"><span class="pre">flaz/ops/</span></code></p></li>
+<li><p>é descoberta automaticamente por introspecção</p></li>
+<li><p>é testável isoladamente</p></li>
+<li><p>é mapeada para um verbo público (<code class="docutils literal notranslate"><span class="pre">f.hag()</span></code>, <code class="docutils literal notranslate"><span class="pre">f.vielas()</span></code>…)</p></li>
+</ul>
+<p>Operations representam <strong>como fazer</strong>.</p>
+</section>
+<hr class="docutils" />
+<section id="layers">
+<h3>3. <strong>Layers</strong><a class="headerlink" href="#layers" title="Link para este cabeçalho">#</a></h3>
+<p>São os <strong>resultados derivados</strong> produzidos pelas operações.<br />
+Cada operação <code class="docutils literal notranslate"><span class="pre">_calc_*</span></code> gera uma Arrow Table registrada como:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">f</span><span class="o">.</span><span class="n">layers</span><span class="p">[</span><span class="s2">&quot;hag&quot;</span><span class="p">]</span>
+<span class="n">f</span><span class="o">.</span><span class="n">layers</span><span class="p">[</span><span class="s2">&quot;vielas&quot;</span><span class="p">]</span>
+<span class="n">f</span><span class="o">.</span><span class="n">layers</span><span class="p">[</span><span class="s2">&quot;fft&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Cada layer é:</p>
+<ul class="simple">
+<li><p>um estado derivado</p></li>
+<li><p>persistido em Parquet</p></li>
+<li><p>versionável</p></li>
+<li><p>consumido pelo &#64;fviz</p></li>
+</ul>
+<p>Layers representam <strong>o que foi produzido</strong>.</p>
+</section>
+<hr class="docutils" />
+<section id="como-a-triade-opera-na-pratica">
+<h3>Como a tríade opera na prática<a class="headerlink" href="#como-a-triade-opera-na-pratica" title="Link para este cabeçalho">#</a></h3>
+<ol class="arabic simple">
+<li><p><em>Capability:</em> “O FLAZ pode calcular HAG.”</p></li>
+<li><p><em>Operation:</em> <code class="docutils literal notranslate"><span class="pre">_calc_hag()</span></code> é executada.</p></li>
+<li><p><em>Layer:</em> <code class="docutils literal notranslate"><span class="pre">HAGbility</span></code> é registrada como resultado.</p></li>
+</ol>
+<p>Este modelo organiza todo o FLAZ.</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="alternativas-consideradas">
+<h2>Alternativas consideradas<a class="headerlink" href="#alternativas-consideradas" title="Link para este cabeçalho">#</a></h2>
+<section id="classe-monolitica-com-todos-os-metodos">
+<h3>1. Classe monolítica com todos os métodos<a class="headerlink" href="#classe-monolitica-com-todos-os-metodos" title="Link para este cabeçalho">#</a></h3>
+<ul class="simple">
+<li><p>difícil de manter</p></li>
+<li><p>acoplamento alto</p></li>
+<li><p>impróprio para escalabilidade</p></li>
+</ul>
+</section>
+<section id="herancas-profundas-hagclass-vielasclass">
+<h3>2. Heranças profundas (HAGClass, VielasClass…)<a class="headerlink" href="#herancas-profundas-hagclass-vielasclass" title="Link para este cabeçalho">#</a></h3>
+<ul class="simple">
+<li><p>burocrático</p></li>
+<li><p>excesso de cerimônia</p></li>
+<li><p>pouca fluidez</p></li>
+</ul>
+</section>
+<section id="organizacao-apenas-por-verbos">
+<h3>3. Organização apenas por verbos<a class="headerlink" href="#organizacao-apenas-por-verbos" title="Link para este cabeçalho">#</a></h3>
+<ul class="simple">
+<li><p>capabilities ficariam implícitas</p></li>
+<li><p>dificulta documentação</p></li>
+</ul>
+</section>
+<section id="organizacao-apenas-por-layers">
+<h3>4. Organização apenas por layers<a class="headerlink" href="#organizacao-apenas-por-layers" title="Link para este cabeçalho">#</a></h3>
+<ul class="simple">
+<li><p>perderia clareza de produção e significado</p></li>
+</ul>
+</section>
+</section>
+<hr class="docutils" />
+<section id="consequencias">
+<h2>Consequências<a class="headerlink" href="#consequencias" title="Link para este cabeçalho">#</a></h2>
+<section id="positivas">
+<h3>Positivas<a class="headerlink" href="#positivas" title="Link para este cabeçalho">#</a></h3>
+<ul class="simple">
+<li><p>Arquitetura escalável e elegante</p></li>
+<li><p>Fácil adicionar novas capacidades (criar um <code class="docutils literal notranslate"><span class="pre">_calc_*</span></code>)</p></li>
+<li><p>API pública coerente: <code class="docutils literal notranslate"><span class="pre">f.hag()</span></code>, <code class="docutils literal notranslate"><span class="pre">f.vielas()</span></code></p></li>
+<li><p>Organização clara para documentação</p></li>
+<li><p>Layers tornam-se entidades científicas</p></li>
+<li><p>&#64;fviz opera diretamente sobre layers</p></li>
+<li><p>Capabilities estruturam a ontologia do projeto</p></li>
+</ul>
+</section>
+<section id="negativas">
+<h3>Negativas<a class="headerlink" href="#negativas" title="Link para este cabeçalho">#</a></h3>
+<ul class="simple">
+<li><p>Requer disciplina de separação conceitual</p></li>
+<li><p>Eventuais renomeações para coerência</p></li>
+<li><p>Documentação precisa acompanhar a evolução</p></li>
+</ul>
+</section>
+</section>
+<hr class="docutils" />
+<section id="notas-finais">
+<h2>Notas finais<a class="headerlink" href="#notas-finais" title="Link para este cabeçalho">#</a></h2>
+<p>A arquitetura declarativa é a <strong>espinha dorsal</strong> do FLAZ.<br />
+Ela separa claramente:</p>
+<ul class="simple">
+<li><p><strong>o que é possível</strong> → <em>Capabilities</em></p></li>
+<li><p><strong>o que é feito</strong> → <em>Operations</em></p></li>
+<li><p><strong>o que é produzido</strong> → <em>Layers</em></p></li>
+</ul>
+<p>Transformando o FLAZ em um sistema modular, interpretável e vivo.<br />
+É a partir dessa tríade que o FLAZ evolui como linguagem, como pipeline e como organismo técnico e fenomenológico.</p>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#status">Status</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#contexto">Contexto</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#decisao">Decisão</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#capabilities">1. <strong>Capabilities</strong></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#operations">2. <strong>Operations</strong></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#layers">3. <strong>Layers</strong></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#como-a-triade-opera-na-pratica">Como a tríade opera na prática</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#alternativas-consideradas">Alternativas consideradas</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#classe-monolitica-com-todos-os-metodos">1. Classe monolítica com todos os métodos</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#herancas-profundas-hagclass-vielasclass">2. Heranças profundas (HAGClass, VielasClass…)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#organizacao-apenas-por-verbos">3. Organização apenas por verbos</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#organizacao-apenas-por-layers">4. Organização apenas por layers</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#consequencias">Consequências</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#positivas">Positivas</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#negativas">Negativas</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#notas-finais">Notas finais</a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+  <div role="note" aria-label="source link">
+    <h3>Essa Página</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/adr/ADR-0006-arquitetura-declarativa.md.txt"
+            rel="nofollow">Exibir Fonte</a></li>
+    </ul>
+   </div></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2025, Fernando Gomes.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Criada usando <a href="https://www.sphinx-doc.org/pt_BR/master">Sphinx</a> 8.2.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
