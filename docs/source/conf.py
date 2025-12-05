@@ -18,6 +18,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",   # permite docstring Google/NumPy
     "sphinx_autodoc_typehints",
+    "sphinx_click",
 ]
 
 myst_enable_extensions = [

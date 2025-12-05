@@ -1,0 +1,694 @@
+
+<!DOCTYPE html>
+
+
+<html lang="pt-BR" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>ADR-0003 — Sistema de Plugins _calc_* como mecanismo oficial de operações do FLAZ &#8212; Documentação Flaz </title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../_static/documentation_options.js?v=8946c2f5"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/translations.js?v=71a39b36"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'adr/ADR-0003-plugin-system';</script>
+    <link rel="index" title="Índice" href="../genindex.html" />
+    <link rel="search" title="Buscar" href="../search.html" />
+    <link rel="next" title="ADR-0004 — Adoção do modelo ETLVA como espinha dorsal conceitual do FLAZ" href="ADR-0004-etlva.html" />
+    <link rel="prev" title="ADR-0002 — Adoção de Parquet/Arrow como formato persistido oficial do FLAZ" href="ADR-0002-parquet-arrow.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="pt-BR"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Documentação Flaz </p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ADR-0000-manifesto-adr.html">
+    ADR-0000 — Adoção de Architecture Decision Records (ADRs)
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ADR-0001-morton-128bits.html">
+    ADR-0001 — Adoção de Morton (Z-Order) como estrutura hierárquica do formato .flaz
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ADR-0002-parquet-arrow.html">
+    ADR-0002 — Adoção de Parquet/Arrow como formato persistido oficial do FLAZ
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="#">
+    ADR-0003 — Sistema de Plugins _calc_* como mecanismo oficial de operações do FLAZ
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ADR-0004-etlva.html">
+    ADR-0004 — Adoção do modelo ETLVA como espinha dorsal conceitual do FLAZ
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button"
+                data-bs-toggle="dropdown" aria-expanded="false"
+                aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ADR-0005-verbility.html">
+    ADR-0005 — Adoção da gramática Verbility como sistema de habilidades do FLAZ
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ADR-0006-arquitetura-declarativa.html">
+    ADR-0006 — Adoção da Arquitetura Declarativa (Capabilities → Operations → Layers)
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ADR-0007-licenciamento.html">
+    ADR-0007 — Licenciamento e Governança do Ecossistema FLAZ/FVIZ/FavelaViz
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ADR-0008-token-flaz.html">
+    ADR-0008 — O Formato .flaz como Token Espacial Vivo (128 bits)
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Buscar" aria-label="Buscar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Buscar</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Buscar" aria-label="Buscar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Buscar</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ADR-0000-manifesto-adr.html">
+    ADR-0000 — Adoção de Architecture Decision Records (ADRs)
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ADR-0001-morton-128bits.html">
+    ADR-0001 — Adoção de Morton (Z-Order) como estrutura hierárquica do formato .flaz
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ADR-0002-parquet-arrow.html">
+    ADR-0002 — Adoção de Parquet/Arrow como formato persistido oficial do FLAZ
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="#">
+    ADR-0003 — Sistema de Plugins _calc_* como mecanismo oficial de operações do FLAZ
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ADR-0004-etlva.html">
+    ADR-0004 — Adoção do modelo ETLVA como espinha dorsal conceitual do FLAZ
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ADR-0005-verbility.html">
+    ADR-0005 — Adoção da gramática Verbility como sistema de habilidades do FLAZ
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ADR-0006-arquitetura-declarativa.html">
+    ADR-0006 — Adoção da Arquitetura Declarativa (Capabilities → Operations → Layers)
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ADR-0007-licenciamento.html">
+    ADR-0007 — Licenciamento e Governança do Ecossistema FLAZ/FVIZ/FavelaViz
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ADR-0008-token-flaz.html">
+    ADR-0008 — O Formato .flaz como Token Espacial Vivo (128 bits)
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"></div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">ADR-0003 — Sistema de Plugins <code class="docutils literal notranslate"><span class="pre">_calc_*</span></code> como mecanismo oficial de operações do FLAZ</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="adr-0003-sistema-de-plugins-calc-como-mecanismo-oficial-de-operacoes-do-flaz">
+<h1>ADR-0003 — Sistema de Plugins <code class="docutils literal notranslate"><span class="pre">_calc_*</span></code> como mecanismo oficial de operações do FLAZ<a class="headerlink" href="#adr-0003-sistema-de-plugins-calc-como-mecanismo-oficial-de-operacoes-do-flaz" title="Link para este cabeçalho">#</a></h1>
+<section id="status">
+<h2>Status<a class="headerlink" href="#status" title="Link para este cabeçalho">#</a></h2>
+<p>Accepted</p>
+</section>
+<section id="contexto">
+<h2>Contexto<a class="headerlink" href="#contexto" title="Link para este cabeçalho">#</a></h2>
+<p>Ao longo do desenvolvimento, o FLAZ começou a acumular diversas operações complexas:</p>
+<ul class="simple">
+<li><p>HAG (Height Above Ground)</p></li>
+<li><p>MDS/MDT</p></li>
+<li><p>Vielas e espaços vazios</p></li>
+<li><p>Concavidades, envelopes, FFTs</p></li>
+<li><p>Métricas multi-escala</p></li>
+<li><p>Sunibility, windibility, shadowability</p></li>
+<li><p>ETC…</p></li>
+</ul>
+<p>O núcleo <code class="docutils literal notranslate"><span class="pre">Flaz</span></code> não poderia se transformar em um monólito cheio de métodos pesados.
+Era preciso criar uma arquitetura:</p>
+<ul class="simple">
+<li><p><strong>modular</strong>,</p></li>
+<li><p><strong>escalável</strong>,</p></li>
+<li><p><strong>descoberta automaticamente</strong>,</p></li>
+<li><p><strong>fácil de estender</strong>,</p></li>
+<li><p><strong>com operações isoladas para testes</strong>,</p></li>
+<li><p><strong>e que não sujasse a classe principal</strong>.</p></li>
+</ul>
+<p>Ao mesmo tempo, o FLAZ precisava manter uma <strong>API elegante</strong>, onde o usuário
+pudesse escrever simplesmente:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">f</span> <span class="o">=</span> <span class="n">Flaz</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<span class="n">f</span><span class="o">.</span><span class="n">hag</span><span class="p">()</span>
+<span class="n">f</span><span class="o">.</span><span class="n">mds</span><span class="p">()</span>
+<span class="n">f</span><span class="o">.</span><span class="n">vielas</span><span class="p">()</span>
+<span class="n">f</span><span class="o">.</span><span class="n">flaz</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Ou seja: uma API verbosa, viva, natural — sem carregar complexidade técnica.</p>
+<p>Para conciliar legibilidade com modularidade, o projeto precisava de um sistema
+de verbos plugáveis, onde cada operação é um módulo autônomo.</p>
+<section id="decisao">
+<h3>Decisão<a class="headerlink" href="#decisao" title="Link para este cabeçalho">#</a></h3>
+<p>O FLAZ adotará um plugin system baseado em funções <em>calc</em>*:</p>
+<ol class="arabic simple">
+<li><p>Cada operação pesada é implementada em um módulo separado:</p></li>
+</ol>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">flaz</span><span class="o">/</span><span class="n">ops</span><span class="o">/</span><span class="n">_calc_hag</span><span class="o">.</span><span class="n">py</span>
+<span class="n">flaz</span><span class="o">/</span><span class="n">ops</span><span class="o">/</span><span class="n">_calc_vielas</span><span class="o">.</span><span class="n">py</span>
+<span class="n">flaz</span><span class="o">/</span><span class="n">ops</span><span class="o">/</span><span class="n">_calc_fft</span><span class="o">.</span><span class="n">py</span>
+<span class="o">...</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li><p>Cada módulo define uma única função com a assinatura:</p></li>
+</ol>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">_calc_</span><span class="o">&lt;</span><span class="n">verbo</span><span class="o">&gt;</span><span class="p">(</span><span class="n">flaz</span><span class="p">:</span> <span class="n">Flaz</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pyarrow</span><span class="o">.</span><span class="n">Table</span><span class="p">:</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="3">
+<li><p>O núcleo Flaz irá, durante a inicialização, varrer automaticamente o
+pacote flaz/ops/, buscar todas as funções <em>calc</em>* e:</p></li>
+</ol>
+<ul class="simple">
+<li><p>registrar o verbo correspondente,</p></li>
+<li><p>injetar um método público na instância,</p></li>
+<li><p>conectar operação → layer → persistência → metadata.</p></li>
+</ul>
+<ol class="arabic simple" start="4">
+<li><p>O método público resultante será do tipo:</p></li>
+</ol>
+<p><code class="docutils literal notranslate"><span class="pre">f.&lt;verbo&gt;()</span></code></p>
+<ol class="arabic simple" start="5">
+<li><p>O layer resultante será registrado automaticamente em:</p></li>
+</ol>
+<p><code class="docutils literal notranslate"><span class="pre">f.layers[&quot;&lt;verbo&gt;&quot;]</span> <span class="pre">=</span> <span class="pre">tabela_arrow</span></code></p>
+<ol class="arabic simple" start="6">
+<li><p>O método _register_layer continuará sendo o responsável por registrar os
+artefatos derivados e manter rastreabilidade.</p></li>
+</ol>
+</section>
+<section id="em-suma">
+<h3>Em suma:<a class="headerlink" href="#em-suma" title="Link para este cabeçalho">#</a></h3>
+<blockquote>
+<div><p>O FLAZ aprende novas habilidades simplesmente colocando arquivos no diretório de operações.</p>
+</div></blockquote>
+<p>Sem tocar no core.</p>
+</section>
+<section id="alternativas-consideradas">
+<h3>Alternativas consideradas<a class="headerlink" href="#alternativas-consideradas" title="Link para este cabeçalho">#</a></h3>
+<ol class="arabic simple">
+<li><p>Colocar todas as operações na classe Flaz</p></li>
+</ol>
+<p>Desvantagens:</p>
+<ul class="simple">
+<li><p>polui a API,</p></li>
+<li><p>aumenta o acoplamento,</p></li>
+<li><p>dificulta testes,</p></li>
+<li><p>inviabiliza evolução modular.</p></li>
+</ul>
+<ol class="arabic simple" start="2">
+<li><p>Criar subclasses para cada habilidade (HAGbility, Vielability…)</p></li>
+</ol>
+<p>Melhor semântica, mas ainda gera acoplamento e não cria um pipeline declarativo limpo.</p>
+<ol class="arabic simple" start="3">
+<li><p>Registrar manualmente cada verbo</p></li>
+</ol>
+<p>Quebra a promessa de extensibilidade automática.</p>
+<ol class="arabic simple" start="4">
+<li><p>Criar uma estrutura de “command objects”</p></li>
+</ol>
+<p>Apesar de elegante, seria excesso de cerimônia para o propósito.</p>
+</section>
+<section id="consequencias">
+<h3>Consequências<a class="headerlink" href="#consequencias" title="Link para este cabeçalho">#</a></h3>
+<section id="positivas">
+<h4>Positivas<a class="headerlink" href="#positivas" title="Link para este cabeçalho">#</a></h4>
+<ul class="simple">
+<li><p>O núcleo do FLAZ permanece pequeno, estável e elegante.</p></li>
+<li><p>Cada operação é testável de forma isolada.</p></li>
+<li><p>O sistema é naturalmente extensível (basta adicionar um - arquivo).</p></li>
+<li><p>A API do usuário é intuitiva (f.hag(), f.vielas(), etc.).</p></li>
+<li><p>Facilita documentação automática no Sphinx.</p></li>
+<li><p>Permite criar “habilidades“ (Verbility) de maneira orgânica.</p></li>
+</ul>
+</section>
+<section id="negativas">
+<h4>Negativas<a class="headerlink" href="#negativas" title="Link para este cabeçalho">#</a></h4>
+<ul class="simple">
+<li><p>Exige disciplina de nomenclatura (<em>calc</em>*).</p></li>
+<li><p>Pode gerar muitos módulos no diretório de operações (esperado - em um projeto vivo).</p></li>
+<li><p>Requer lógica de introspecção bem definida no núcleo.</p></li>
+</ul>
+</section>
+</section>
+<section id="notas-finais">
+<h3>Notas finais<a class="headerlink" href="#notas-finais" title="Link para este cabeçalho">#</a></h3>
+<p>Este plugin system faz parte da identidade do FLAZ.
+Ele transforma um pipeline rígido em uma linguagem viva, onde novas
+operações nascem por adição, não por modificação.</p>
+<p>O FLAZ se torna um organismo: o núcleo é pequeno, e as habilidades crescem
+nas bordas.</p>
+<p>Esta ADR estabelece o mecanismo que permitirá que o projeto viva por anos.</p>
+</section>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="ADR-0002-parquet-arrow.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">anterior</p>
+        <p class="prev-next-title">ADR-0002 — Adoção de Parquet/Arrow como formato persistido oficial do FLAZ</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="ADR-0004-etlva.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">próximo</p>
+        <p class="prev-next-title">ADR-0004 — Adoção do modelo ETLVA como espinha dorsal conceitual do FLAZ</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#status">Status</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#contexto">Contexto</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#decisao">Decisão</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#em-suma">Em suma:</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#alternativas-consideradas">Alternativas consideradas</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#consequencias">Consequências</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#positivas">Positivas</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#negativas">Negativas</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#notas-finais">Notas finais</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+  <div role="note" aria-label="source link">
+    <h3>Essa Página</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/adr/ADR-0003-plugin-system.md.txt"
+            rel="nofollow">Exibir Fonte</a></li>
+    </ul>
+   </div></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2025, Fernando Gomes.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Criada usando <a href="https://www.sphinx-doc.org/pt_BR/master">Sphinx</a> 8.2.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

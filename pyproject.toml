@@ -15,7 +15,8 @@ dependencies = [
   "shapely>=2.0.0",
   "pyproj>=3.6",
   "requests>=2.32",
-  "laspy[lazrs]>=2.5"
+  "laspy[lazrs]>=2.5",
+  "typer>=0.20"
 ]
 
 [project.optional-dependencies]
@@ -34,3 +35,15 @@ build-backend = "setuptools.build_meta"
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
+
+[project.scripts]
+flaz = "flaz.cli.main:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["flaz*"]
+
+[tool.setuptools.package-data]
+"flaz.data" = ["*"]
+
+
