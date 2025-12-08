@@ -45,26 +45,60 @@ class Favela:
         return self.table.num_rows
 
     def calc_flaz(self, force_recalc: bool = False):
+        """
+        Calcula o token .flaz e adiciona uma coluna flaz_colormap (uint8)
+        baseada em uma variável contínua — por padrão o eixo Z normalizado.
+        """
         if hasattr(self, "flaz") and not force_recalc:
             return self
 
-        # 1) Carrega pontos
+        # 1) Carrega pontos brutos
         table = self._load_points()
 
         # 2) Normaliza coordenadas ANTES do Morton
         table = self._normalize_coordinates(table)
-        self.table = table
+        self.table = table  # salva estado intermediário
 
-        # 3) Computa FLaz sobre coordenadas já quantizadas
+        # 3) Computa o .flaz sobre coordenadas normalizadas
         self.flaz = compute_flaz(
             self,
             meta=getattr(self, "meta", {}),
         )
 
+        # 4) Gera coluna flaz_colormap (uint8)
+        # ------------------------------------------------------------
+        # Por padrão usamos eixo Z normalizado para colorir os pontos.
+        # Você pode trocar facilmente por 'hag', 'mds', etc.
+        # ------------------------------------------------------------
+
+        import numpy as np
+        import pyarrow as pa
+
+        # pega coluna z normalizada
+        z = table["z"].to_numpy(zero_copy_only=False)
+
+        # evita divisão por zero
+        zmin = float(np.min(z))
+        zmax = float(np.max(z))
+        if zmax == zmin:
+            cmap = np.zeros_like(z, dtype="uint8")
+        else:
+            cmap = ((z - zmin) / (zmax - zmin) * 255).astype("uint8")
+
+        # adiciona coluna no Arrow
+        table = table.append_column(
+            "flaz_colormap",
+            pa.array(cmap, type=pa.uint8())
+        )
+
+        self.table = table  # atualiza tabela final
+
+        # 5) Registra layer caso exista o registry
         if hasattr(self, "_register_layer"):
             self._register_layer("flaz")
 
         return self
+
 
     def persist(self, uri: str):
         """
