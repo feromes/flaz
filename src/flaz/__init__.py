@@ -10,3 +10,6 @@ __all__ = [
     "FLaz",
     "FlazIO",
 ]
+
+__version__ = "0.1.0"
+

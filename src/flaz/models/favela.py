@@ -10,6 +10,10 @@ import laspy
 import numpy as np
 from flaz.io import FlazIO
 from flaz.config import RESOLUCAO_MINIMA
+import json
+from pathlib import Path
+from datetime import datetime
+import flaz  # para obter a versão
 
 
 class Favela:
@@ -79,6 +83,8 @@ class Favela:
 
         io = FlazIO()
         final_path = io.write_favela(self, uri)
+        self.write_metadata(self.table, final_path)
+
         return final_path
 
     def periodo(self, ano: int):
@@ -157,6 +163,59 @@ class Favela:
 
         return nome_norm
 
+
+    def write_metadata(self, table, arrow_path: str):
+        """
+        Escreve o metadata JSON da favela no mesmo diretório do arquivo .arrow.
+        Estrutura: FLAZ-Metadata v1.0.
+        """
+
+        arrow_path = Path(arrow_path)
+        out_dir = arrow_path.parent
+
+        nome_json = f"{self.nome_normalizado()}_{self._ano}.json"
+        json_path = out_dir / nome_json
+
+        bb = self.compute_bounding_box(table)
+
+        metadata = {
+            "id": self.nome_normalizado(),
+            "ano": self._ano,
+            "bb_normalizado": bb,
+            "resolucao": 12.5,             # constante atual do FLAZ
+            "offset": [0, 0, 0],           # por enquanto fixo
+            "src": "EPSG:31983",
+            "point_count": table.num_rows,
+            "atributos": [col for col in table.column_names],
+            "versao_flaz": flaz.__version__,
+        }
+
+        with open(json_path, "w", encoding="utf-8") as f:
+            json.dump(metadata, f, indent=2, ensure_ascii=False)
+
+        return json_path
+
+    def compute_bounding_box(self, table: pa.Table):
+        """
+        Calcula o bounding box normalizado da tabela Arrow.
+        Retorna [xmin, xmax, ymin, ymax, zmin, zmax].
+
+        >>> from flaz import Favela
+        >>> f = Favela("São Remo").periodo(2017).calc_flaz()
+        >>> bb = f.compute_bounding_box(f.table)
+        >>> bb
+        [0, 8651, 0, 9364, 0, 759]
+        """
+
+        xs = table["x"].to_numpy(zero_copy_only=False)
+        ys = table["y"].to_numpy(zero_copy_only=False)
+        zs = table["z"].to_numpy(zero_copy_only=False)
+
+        xmin, xmax = int(xs.min()), int(xs.max())
+        ymin, ymax = int(ys.min()), int(ys.max())
+        zmin, zmax = int(zs.min()), int(zs.max())
+
+        return [xmin, xmax, ymin, ymax, zmin, zmax]
 
     def _load_geom_from_package(self):
         """
