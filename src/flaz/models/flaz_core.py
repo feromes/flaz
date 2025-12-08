@@ -81,7 +81,7 @@ class FLaz:
     FORMAT = "FLAZ"
     VERSION = "0.1.0"
 
-    DEFAULT_CRS = "EPSG:4326"
+    DEFAULT_CRS = "EPSG:31983"
 
     REQUIRED_META_FIELDS = {
         "nome",

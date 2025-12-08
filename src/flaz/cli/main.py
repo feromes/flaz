@@ -16,7 +16,7 @@ def calc_hag(
 
     f = Favela(favela).periodo(ano)
     f.calc_flaz()
-    out = f"temp://{favela}_{ano}_hag.arrow"
+    out = f"temp://{f.nome_normalizado()}_{ano}_hag.arrow"
     f.persist(out)
 
     typer.echo(f"✔ Concluído! Arquivo salvo em {out}")
@@ -38,7 +38,7 @@ def calc_more(
 
         f = Favela(nome).periodo(ano)
         f.calc_flaz()   # ou calc_hag se preferir, você escolhe
-        out = f"temp://{nome}_{ano}_hag.arrow"
+        out = f"temp://{f.nome_normalizado()}_{ano}_hag.arrow"
         f.persist(out)
 
     typer.echo("\n✔ Concluído processamento de todas as favelas!")

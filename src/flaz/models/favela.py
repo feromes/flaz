@@ -9,6 +9,7 @@ from flaz.io import LIDAR_INDEX
 import laspy
 import numpy as np
 from flaz.io import FlazIO
+from flaz.config import RESOLUCAO_MINIMA
 
 
 class Favela:
@@ -40,23 +41,17 @@ class Favela:
         return self.table.num_rows
 
     def calc_flaz(self, force_recalc: bool = False):
-        """
-        Materializa a nuvem de pontos sob o formato de um token FLaz mínimo da favela.
-        Este é o ponto de entrada ontológico de todo o pipeline.
-        Após a execução, o resultado fica disponível em:
-            self.flaz
-
-        >>> from flaz import Favela
-        >>> f = Favela("São Remo").periodo(2017)
-        >>> f.calc_flaz().num_points
-        28142130
-
-        """
         if hasattr(self, "flaz") and not force_recalc:
             return self
 
-        self.table = self._load_points()
+        # 1) Carrega pontos
+        table = self._load_points()
 
+        # 2) Normaliza coordenadas ANTES do Morton
+        table = self._normalize_coordinates(table)
+        self.table = table
+
+        # 3) Computa FLaz sobre coordenadas já quantizadas
         self.flaz = compute_flaz(
             self,
             meta=getattr(self, "meta", {}),
@@ -143,6 +138,26 @@ class Favela:
         ano = self._ano
         return LIDAR_INDEX.tiles_for_geom(self.geometry, ano=ano)  # carrega o índice LiDAR do ano selecionado
     
+    def nome_normalizado(self):
+        """
+        Retorna o nome da favela normalizado (minúsculas, sem espaços extras, camelcase e sem acento).
+        Útil para comparações.
+
+        >>> from flaz import Favela
+        >>> f = Favela("São Remo")
+        >>> f.nome_normalizado()
+        'sao_remo'
+        """
+        import unicodedata
+
+        nome_norm = self.nome.strip().lower()
+        nome_norm = unicodedata.normalize("NFKD", nome_norm).encode("ASCII", "ignore").decode("ASCII")
+        nome_norm = "_".join(nome_norm.split())  # remove espaços extras
+        # nome_norm = nome_norm.title()  # camelcase
+
+        return nome_norm
+
+
     def _load_geom_from_package(self):
         """
         Carrega a geometria da favela a partir do GPKG embarcado no pacote.
@@ -215,5 +230,53 @@ class Favela:
                 "classification": C,
             }
         )
+
+        return table
+
+    def _normalize_coordinates(self, table):
+        """
+        Normaliza X,Y,Z para inteiros usando RESOLUCAO_MINIMA como step.
+        """
+
+        import pyarrow as pa
+        import pyarrow.compute as pc
+
+        # ---- extrai mínimos (float)
+        xmin = pc.min(table["x"]).as_py()
+        ymin = pc.min(table["y"]).as_py()
+        zmin = pc.min(table["z"]).as_py()
+
+        q = RESOLUCAO_MINIMA
+
+        # ---- cria scalars Arrow dos valores mínimos
+        xmin_sc = pa.scalar(xmin, pa.float64())
+        ymin_sc = pa.scalar(ymin, pa.float64())
+        zmin_sc = pa.scalar(zmin, pa.float64())
+        q_sc = pa.scalar(q, pa.float64())
+
+        # ---- operações todas via pyarrow.compute
+        x_centered = pc.subtract(table["x"], xmin_sc)
+        y_centered = pc.subtract(table["y"], ymin_sc)
+        z_centered = pc.subtract(table["z"], zmin_sc)
+
+        x_norm = pc.round(pc.divide(x_centered, q_sc)).cast(pa.int32())
+        y_norm = pc.round(pc.divide(y_centered, q_sc)).cast(pa.int32())
+        z_norm = pc.round(pc.divide(z_centered, q_sc)).cast(pa.int32())
+
+        # ---- substituir colunas (Arrow é imutável → retorna nova tabela)
+        table = table.set_column(
+            table.schema.get_field_index("x"), "x", x_norm
+        )
+        table = table.set_column(
+            table.schema.get_field_index("y"), "y", y_norm
+        )
+        table = table.set_column(
+            table.schema.get_field_index("z"), "z", z_norm
+        )
+
+        # ---- registra metadados úteis para FVIZ
+        self.meta = getattr(self, "meta", {})
+        self.meta["offsets"] = {"xmin": xmin, "ymin": ymin, "zmin": zmin}
+        self.meta["quantization"] = q
 
         return table

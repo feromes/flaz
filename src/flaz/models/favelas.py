@@ -96,3 +96,5 @@ class Favelas:
 
         return pd.concat(resultados).drop_duplicates()
     
+
+    

@@ -1,0 +1,1 @@
+RESOLUCAO_MINIMA = 0.125  # 12.5 cm
