@@ -8,4 +8,5 @@ dist/
 *.egg-info/
 .DS_Store
 flaz_tmp/
+src/flaz/data/*.gpkg-*
 
