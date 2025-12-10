@@ -4,6 +4,7 @@ import geopandas as gpd
 import pandas as pd
 from .favela import Favela
 import unicodedata
+import json
 class Favelas:
     """
     Representa um conjunto de favelas, permitindo iteração e acesso a cada
@@ -22,7 +23,7 @@ class Favelas:
 
     >>> favelas = Favelas()
     >>> len(favelas)
-    9
+    10
     >>> for favela in favelas:
     ...     print(favela.nome)
     Heliópolis
@@ -34,6 +35,11 @@ class Favelas:
     Paraisópolis
     Futuro Melhor
     São Remo
+    Abacateiro
+
+    >>> favelas = Favelas()
+    >>> json = favelas.to_json()
+
     """
 
     FAVELAS_MORE = [
@@ -96,6 +102,17 @@ class Favelas:
             resultados.append(subset)
 
         return pd.concat(resultados).drop_duplicates()
+    
+    def to_json(self, **kwargs):
+        """Retorna a representação JSON de todas as favelas no conjunto."""
+        lista = []
+        for favela in self.favelas:
+            lista.append({
+                "nome": favela.nome,
+                "nome_secundario": favela.fv_nome_sec,
+            })
+
+        return json.dumps(lista, ensure_ascii=False, indent=2)
     
 
     

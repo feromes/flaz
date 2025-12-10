@@ -41,6 +41,19 @@ def calc_more(
         out = f"temp://{f.nome_normalizado()}_{ano}_hag.arrow"
         f.persist(out)
 
+    # Gera o json de Favelas.More
+    favelas = Favelas()
+
+    from pathlib import Path
+    tmp_dir = Path.cwd() / "flaz_tmp"
+    tmp_dir.mkdir(exist_ok=True)
+
+    json_out = tmp_dir / "favelas.json"
+
+    with open(json_out, "w", encoding="utf-8") as f:        
+        f.write(favelas.to_json())  
+    typer.echo(f"\n✔ Arquivo JSON salvo em {json_out}")
+
     typer.echo("\n✔ Concluído processamento de todas as favelas!")
 
 
