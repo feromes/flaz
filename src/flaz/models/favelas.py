@@ -41,7 +41,8 @@ class Favelas:
         "Cocaia I",
         "Paraisópolis",
         "Futuro Melhor",
-        "São Remo"
+        "São Remo",
+        "Abacateiro",
     ]
 
     def __init__(self, favelas=[], distritos=[], sub_prefeituras=[], db_path: Path = None):

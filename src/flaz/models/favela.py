@@ -99,7 +99,6 @@ class Favela:
 
         return self
 
-
     def persist(self, uri: str):
         """
         Persiste o objeto Favela atual em disco, incluindo todas as camadas
@@ -197,7 +196,6 @@ class Favela:
 
         return nome_norm
 
-
     def write_metadata(self, table, arrow_path: str):
         """
         Escreve o metadata JSON da favela no mesmo diretório do arquivo .arrow.
@@ -207,14 +205,24 @@ class Favela:
         arrow_path = Path(arrow_path)
         out_dir = arrow_path.parent
 
-        nome_json = f"{self.nome_normalizado()}_{self._ano}.json"
+        nome_json = f"{self.nome_normalizado()}.json"
         json_path = out_dir / nome_json
 
         bb = self.compute_bounding_box(table)
 
         metadata = {
             "id": self.nome_normalizado(),
-            "ano": self._ano,
+            "nome": self.nome,
+            "nome_secundario": self.fv_nome_sec if hasattr(self, "fv_nome_sec") else None,
+            # "anos": self._ano, # aqui o ideal seria uma lista de anos
+            "area_m2": self.geometry.area,
+            "centroide": [
+                float(self.geometry.centroid.x),
+                float(self.geometry.centroid.y)
+            ],
+            "icone": "favela_nome.svg",
+            "cor": "#FF5733",               # cor padrão (pode ser alterada)
+            "data_geracao": datetime.now().strftime("%Y-%m-%d"),
             "bb_normalizado": bb,
             "resolucao": 12.5,             # constante atual do FLAZ
             "offset": [0, 0, 0],           # por enquanto fixo
@@ -282,8 +290,11 @@ class Favela:
         # retorna apenas a geometria (shapely)
         geom = row.geometry.iloc[0]
 
-        # também pode guardar crs, se quiser
+        # campos uteis
         self.crs = gdf.crs
+        self.fv_nome = row.get("fv_nome").iloc[0]
+        self.fv_nome_sec = row.get("fv_nom_sec").iloc[0]   # ⭐ agora funciona!
+        self.area = row.geometry.area               # se quiser
 
         return geom
 
