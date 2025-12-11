@@ -55,6 +55,13 @@ class Favela:
         # 1) Carrega pontos brutos
         table = self._load_points()
 
+        # 1.1) Constroi a máscara geometrica baseada na geometria da favela
+        mask = self._build_geometry_mask(table, self.geometry)
+
+        # 1.5) Corta a nuvem de pontos para ficar contida dentro da geometria da favela
+        table = self._crop_points_to_geometry(table, mask)
+        self.table = table  # atualiza tabela intermediária
+
         # 2) Normaliza coordenadas ANTES do Morton
         table = self._normalize_coordinates(table)
         self.table = table  # salva estado intermediário
@@ -246,7 +253,7 @@ class Favela:
         >>> f = Favela("São Remo").periodo(2017).calc_flaz()
         >>> bb = f.compute_bounding_box(f.table)
         >>> bb
-        [0, 8651, 0, 9364, 0, 759]
+        [0, 3407, 0, 3149, 0, 442]
         """
 
         xs = table["x"].to_numpy(zero_copy_only=False)
@@ -384,3 +391,106 @@ class Favela:
         self.meta["quantization"] = q
 
         return table
+    
+    def _build_geometry_mask(self, table, geometry, resolution=1024):
+        """
+        Constrói uma máscara rasterizada (numpy.ndarray bool)
+        baseada na geometria da favela, no SRC ORIGINAL dos pontos.
+
+        A resolução é adaptada ao bounding box da geometria.
+        """
+
+        import numpy as np
+        import shapely
+
+        if geometry is None:
+            return None
+
+        # Extrai bounding box da geometria (SRC original)
+        minx, miny, maxx, maxy = geometry.bounds
+        width = maxx - minx
+        height = maxy - miny
+
+        # Define resolução proporcional
+        if width >= height:
+            W = resolution
+            H = max(1, int((height / width) * resolution))
+        else:
+            H = resolution
+            W = max(1, int((width / height) * resolution))
+
+        # Prepara grid raster (em coordenadas reais)
+        xs = np.linspace(minx, maxx, W, endpoint=True)
+        ys = np.linspace(miny, maxy, H, endpoint=True)
+
+        # Cria meshgrid de coordenadas
+        gx, gy = np.meshgrid(xs, ys[::-1])  
+        coords = np.column_stack((gx.ravel(), gy.ravel()))
+
+        # Teste vetorizado geometry.contains
+        pts = shapely.points(coords[:, 0], coords[:, 1])
+        inside = shapely.contains(geometry, pts)
+
+        # Converte para raster booleano
+        mask = inside.reshape((H, W))
+
+        # Guarda metadados para uso no crop
+        self._geom_mask = mask
+        self._geom_mask_bounds = (minx, miny, maxx, maxy)
+        self._geom_mask_res = (H, W)
+
+        return mask
+    
+    def _crop_points_to_geometry(self, table, mask):
+        """
+        Usa a máscara rasterizada para recortar a nuvem de pontos.
+        Nenhuma operação geométrica pesada acontece aqui.
+        O crop vira apenas um lookup NumPy -> Arrow filter.
+        """
+
+        import numpy as np
+        import pyarrow as pa
+
+        # Se não houver máscara, retorna tabela original
+        if mask is None:
+            return table
+
+        H, W = mask.shape
+        minx, miny, maxx, maxy = self._geom_mask_bounds
+
+        # Conversão coordenadas -> índice raster
+        xs = table["x"].to_numpy(zero_copy_only=False)
+        ys = table["y"].to_numpy(zero_copy_only=False)
+
+        # Normaliza para [0, 1]
+        tx = (xs - minx) / (maxx - minx + 1e-12)
+        ty = (ys - miny) / (maxy - miny + 1e-12)
+
+        # Converte para índices válidos
+        xi = (tx * (W - 1)).astype(int)
+        yi = ((1 - ty) * (H - 1)).astype(int)  # invertido por causa da linha superior
+
+        # Mantém apenas pontos dentro dos limites
+        valid = (
+            (xi >= 0) & (xi < W) &
+            (yi >= 0) & (yi < H)
+        )
+
+        # Inicializa máscara final de filtragem
+        crop_mask = np.zeros(len(xs), dtype=bool)
+
+        # Marca apenas os pontos que caíram dentro do polígono rasterizado
+        crop_mask[valid] = mask[yi[valid], xi[valid]]
+
+        # Se nenhum ponto passou, retorna tabela vazia
+        if crop_mask.sum() == 0:
+            return table.slice(0, 0)
+
+        # Aplica filtro Arrow (zero-copy)
+        crop_mask_arrow = pa.array(crop_mask)
+        return table.filter(crop_mask_arrow)
+
+
+
+
+
