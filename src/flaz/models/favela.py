@@ -17,8 +17,10 @@ import flaz  # para obter a versão
 from urllib.parse import urlparse
 from shapely.affinity import scale as scale_geom, translate
 from shapely.geometry import Polygon, MultiPolygon
+import math
+import colorsys
 
-
+SE = (-46.633308, -23.550520)  # Marco da Sé (lon, lat)
 
 class Favela:
     """
@@ -48,7 +50,7 @@ class Favela:
             return 0  # ontologicamente: ainda não há nuvem materializada
         return self.table.num_rows
 
-    def icone(self, size: int = 200, fill: str = "#888") -> str:
+    def icone(self, size: int = 200, fill: str | None = None) -> str:
         """
         Retorna um SVG (texto) da geometria da favela normalizada
         em size×size, mantendo proporção e centralizada.
@@ -58,6 +60,9 @@ class Favela:
             return f"""<svg xmlns="http://www.w3.org/2000/svg"
                 width="{size}" height="{size}" viewBox="0 0 {size} {size}"></svg>"""
 
+        if fill is None:
+            fill = self.color(mode="hex")
+            
         # --- bounds ---
         minx, miny, maxx, maxy = geom.bounds
         w = maxx - minx
@@ -111,6 +116,42 @@ class Favela:
     </svg>
     """
 
+    def color(self, mode: str = "hex") -> str:
+        geom = getattr(self, "geometry", None)
+        if geom is None or geom.is_empty:
+            return "#444444"
+
+        cx, cy = geom.centroid.coords[0]
+
+        dx = cx - SE[0]
+        dy = cy - SE[1]
+
+        # Hue: direção geográfica
+        angle = math.atan2(dy, dx)
+        hue = (math.degrees(angle) + 360) % 360
+
+        # Value: distância radial
+        dist = math.hypot(dx, dy)
+        MAX_DIST = 25_000  # metros (ajustável depois)
+        v = min(dist / MAX_DIST, 1.0)
+        value = 0.25 + 0.75 * (v ** 0.7)
+
+        saturation = 0.85
+
+        r, g, b = colorsys.hsv_to_rgb(
+            hue / 360,
+            saturation,
+            value
+        )
+
+        if mode == "rgb":
+            return int(r * 255), int(g * 255), int(b * 255)
+
+        return "#{:02x}{:02x}{:02x}".format(
+            int(r * 255),
+            int(g * 255),
+            int(b * 255)
+        )
 
     def calc_flaz(self, force_recalc: bool = False):
         """
