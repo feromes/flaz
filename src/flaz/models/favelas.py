@@ -103,6 +103,15 @@ class Favelas:
 
         return pd.concat(resultados).drop_duplicates()
     
+    def to_cards(self) -> list[dict]:
+        """
+        Retorna a lista de cards de todas as favelas conhecidas.
+        """
+        cards = []
+        for f in self.favelas:  # ou FAVELAS_MORE
+            cards.append(f.to_card())
+        return cards
+    
     def to_json(self, **kwargs):
         """Retorna a representação JSON de todas as favelas no conjunto."""
         lista = []

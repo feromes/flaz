@@ -264,7 +264,41 @@ class Favela:
     def periodo(self, ano: int):
         self._ano = ano
         return self
-    
+
+    def to_card(self) -> dict:
+        """
+        Retorna um dicionário leve representando a Favela,
+        próprio para listas, navegação e UI (Card).
+        """
+        geom = getattr(self, "geometry", None)
+
+        if geom is not None and not geom.is_empty:
+            minx, miny, maxx, maxy = geom.bounds
+            cx, cy = geom.centroid.coords[0]
+            bbox = [minx, miny, maxx, maxy]
+            centroid = [cx, cy]
+        else:
+            bbox = None
+            centroid = None
+
+        return {
+            "id": self.nome_normalizado(),
+            "nome": self.nome,
+            "entidade": "Favela",
+
+            # caminhos sempre relativos à raiz da API
+            "icon": f"favela/{self.nome_normalizado()}/{self.nome_normalizado()}.svg",
+            "color": self.color(),
+
+            "bbox": bbox,
+            "centroid": centroid,
+
+            # períodos conhecidos (pode evoluir depois)
+            "periodos": self.periodos if hasattr(self, "periodos") else (
+                [self._ano] if self._ano is not None else []
+            ),
+        }
+
     def calc_mds(self, resolution: float = 0.5, force_recalc: bool = False):
         """
         Calcula o Modelo Digital de Superfície (MDS) da favela.

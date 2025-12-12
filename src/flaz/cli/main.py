@@ -2,6 +2,7 @@ import typer
 from flaz import Favela, Favelas
 from pathlib import Path
 import warnings
+import json
 
 warnings.filterwarnings(
     "ignore",
@@ -69,6 +70,14 @@ def calc_more(
 
         f.calc_flaz()
         f.persist(api_path)
+
+    cards = Favelas().to_cards()
+
+    cards_path = api_path / "favelas.json"
+    cards_path.write_text(
+        json.dumps(cards, ensure_ascii=False, indent=2),
+        encoding="utf-8"
+    )
 
     # # Gera o json de Favelas.More dentro da API
     # favelas = Favelas()
