@@ -15,6 +15,8 @@ import json
 from datetime import datetime
 import flaz  # para obter a versão
 from urllib.parse import urlparse
+from shapely.affinity import scale as scale_geom, translate
+from shapely.geometry import Polygon, MultiPolygon
 
 
 
@@ -45,6 +47,70 @@ class Favela:
         if not hasattr(self, "flaz") or self.flaz is None:
             return 0  # ontologicamente: ainda não há nuvem materializada
         return self.table.num_rows
+
+    def icone(self, size: int = 200, fill: str = "#888") -> str:
+        """
+        Retorna um SVG (texto) da geometria da favela normalizada
+        em size×size, mantendo proporção e centralizada.
+        """
+        geom = self.geometry
+        if geom is None or geom.is_empty:
+            return f"""<svg xmlns="http://www.w3.org/2000/svg"
+                width="{size}" height="{size}" viewBox="0 0 {size} {size}"></svg>"""
+
+        # --- bounds ---
+        minx, miny, maxx, maxy = geom.bounds
+        w = maxx - minx
+        h = maxy - miny
+
+        # --- normaliza para origem ---
+        g = translate(geom, xoff=-minx, yoff=-miny)
+
+        # --- escala proporcional ---
+        s = size / max(w, h)
+        g = scale_geom(g, xfact=s, yfact=s, origin=(0, 0))
+
+        # --- centraliza ---
+        dx = (size - w * s) / 2
+        dy = (size - h * s) / 2
+        g = translate(g, xoff=dx, yoff=dy)
+
+        # --- inverte eixo Y (GIS → SVG) ---
+        g = scale_geom(g, xfact=1, yfact=-1, origin=(0, 0))
+
+        # após inverter, a geometria fica com Y negativo,
+        # então precisamos transladar para cima
+        g = translate(g, yoff=size)
+
+        # --- geometry → SVG path ---
+        def ring(coords):
+            pts = list(coords)
+            d = [f"M {pts[0][0]:.2f} {pts[0][1]:.2f}"]
+            d += [f"L {x:.2f} {y:.2f}" for x, y in pts[1:]]
+            d.append("Z")
+            return " ".join(d)
+
+        def poly(p: Polygon):
+            d = ring(p.exterior.coords)
+            for hole in p.interiors:
+                d += " " + ring(hole.coords)
+            return d
+
+        if isinstance(g, Polygon):
+            d = poly(g)
+        elif isinstance(g, MultiPolygon):
+            d = " ".join(poly(p) for p in g.geoms)
+        else:
+            d = poly(g.convex_hull)
+
+        return f"""\
+    <svg xmlns="http://www.w3.org/2000/svg"
+        width="{size}" height="{size}"
+        viewBox="0 0 {size} {size}">
+    <path d="{d}" fill="{fill}" fill-rule="evenodd"/>
+    </svg>
+    """
+
 
     def calc_flaz(self, force_recalc: bool = False):
         """
@@ -152,6 +218,11 @@ class Favela:
 
             arrow_path = per_dir / "flaz.arrow"
             self._write_arrow(arrow_path)
+
+        # --- ícone da favela ---
+        svg = self.icone()
+        icon_path = base / f"{self.nome_normalizado()}.svg"
+        icon_path.write_text(svg, encoding="utf-8")
 
         return root.as_posix()
 
@@ -293,9 +364,6 @@ class Favela:
         zmin, zmax = int(zs.min()), int(zs.max())
 
         return [xmin, xmax, ymin, ymax, zmin, zmax]
-
-    def icone(self):
-        pass
 
     def _load_geom_from_package(self):
         """
