@@ -20,7 +20,7 @@ import math
 import colorsys
 
 
-SE = (-46.633308, -23.550520)  # Marco da Sé (lon, lat)
+SE = (333060.9, 7392952.6)  # coordenadas do SE (m)
 
 class Favela:
     """
@@ -266,34 +266,38 @@ class Favela:
         return self
 
     def to_card(self) -> dict:
-        """
-        Retorna um dicionário leve representando a Favela,
-        próprio para listas, navegação e UI (Card).
-        """
         geom = getattr(self, "geometry", None)
 
         if geom is not None and not geom.is_empty:
             minx, miny, maxx, maxy = geom.bounds
             cx, cy = geom.centroid.coords[0]
+
             bbox = [minx, miny, maxx, maxy]
             centroid = [cx, cy]
+
+            # distância até a Sé (em metros)
+            dx = cx - SE[0]
+            dy = cy - SE[1]
+            dist_se_m = math.sqrt(dx * dx + dy * dy)
+
         else:
             bbox = None
             centroid = None
+            dist_se_m = None
 
         return {
             "id": self.nome_normalizado(),
             "nome": self.nome,
             "entidade": "Favela",
 
-            # caminhos sempre relativos à raiz da API
             "icon": f"favela/{self.nome_normalizado()}/{self.nome_normalizado()}.svg",
             "color": self.color(),
 
             "bbox": bbox,
             "centroid": centroid,
 
-            # períodos conhecidos (pode evoluir depois)
+            "dist_se_m": dist_se_m,
+
             "periodos": self.periodos if hasattr(self, "periodos") else (
                 [self._ano] if self._ano is not None else []
             ),
