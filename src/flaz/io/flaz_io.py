@@ -37,33 +37,10 @@ class FlazIO:
             dest.parent.mkdir(parents=True, exist_ok=True)
             self._write_arrow(table, dest)
             return dest.as_posix()
-
-        # 2) FILE:// → salvar localmente
-        elif scheme == "file":
-            dest = Path(parsed.path)
-            dest.parent.mkdir(parents=True, exist_ok=True)
-            self._write_arrow(table, dest)
-            return dest.as_posix()
-
-        # 3) B2:// → enviar Arrow para Backblaze B2
-        elif scheme == "b2":
-            if not B2_AVAILABLE:
-                raise RuntimeError(
-                    "b2sdk não instalado. Execute: pip install b2sdk"
-                )
-
-            bucket_name = parsed.netloc
-            key = parsed.path.lstrip("/")
-
-            binary = self._arrow_bytes(table)
-            return self._upload_b2(bucket_name, key, binary)
-
-        # 4) Caso sem esquema → tratar como path local
         else:
-            dest = Path(uri)
-            dest.parent.mkdir(parents=True, exist_ok=True)
-            self._write_arrow(table, dest)
-            return dest.as_posix()
+            raise NotImplementedError(f"Esquema URI '{scheme}' não suportado ainda.")
+        # 2) FILE://  → salvar em arquivo local
+
 
 
 

@@ -1,5 +1,6 @@
 from pathlib import Path
 import pyarrow as pa
+import pyarrow.ipc as ipc
 from importlib.resources import files
 import geopandas as gpd
 from flaz.compute import compute_hag
@@ -11,9 +12,10 @@ import numpy as np
 from flaz.io import FlazIO
 from flaz.config import RESOLUCAO_MINIMA
 import json
-from pathlib import Path
 from datetime import datetime
 import flaz  # para obter a versão
+from urllib.parse import urlparse
+
 
 
 class Favela:
@@ -106,26 +108,53 @@ class Favela:
 
         return self
 
-    def persist(self, uri: str):
+    def persist(self, uri: str) -> str:
         """
-        Persiste o objeto Favela atual em disco, incluindo todas as camadas
-        calculadas (mds, hag, vielas, flaz, etc).
+        Persiste a favela em um diretório local (file://),
+        seguindo a estrutura oficial da API FLAZ (v0).
 
         >>> from flaz import Favela
-        >>> f = Favela("São Remo").periodo(2017)
-        >>> uri = f.calc_flaz().persist("temp://sao_remo_2017.arrow")
-
-        Parameters
-        ----------
-        path : Path
-            Caminho do arquivo .parquet a ser salvo.
+        >>> f = Favela("São Remo").periodo(2017).calc_flaz()
+        >>> out_uri = f.persist("file:flaz_tmp")
+        >>> out_uri
+        'flaz_tmp'
         """
+        parsed = urlparse(uri)
 
-        io = FlazIO()
-        final_path = io.write_favela(self, uri)
-        self.write_metadata(self.table, final_path)
+        if parsed.scheme != "file":
+            raise ValueError("Por enquanto, apenas URIs file:// são suportadas.")
 
-        return final_path
+        root = Path(parsed.path)
+        root.mkdir(parents=True, exist_ok=True)
+
+        base = root / "favela" / self.nome_normalizado()
+
+        # --- meta ---
+        meta_dir = base / "meta"
+        meta_dir.mkdir(parents=True, exist_ok=True)
+
+        meta = {
+            "nome": self.nome,
+            "nome_normalizado": self.nome_normalizado(),
+            "entidade": "Favela"
+        }
+
+        (meta_dir / "favela.json").write_text(
+            json.dumps(meta, ensure_ascii=False, indent=2),
+            encoding="utf-8"
+        )
+
+        # --- periodo ---
+        if self._ano is not None:
+            p = str(self._ano)
+            per_dir = base / "periodos" / p
+            per_dir.mkdir(parents=True, exist_ok=True)
+
+            arrow_path = per_dir / "flaz.arrow"
+            self._write_arrow(arrow_path)
+
+        return root.as_posix()
+
 
     def periodo(self, ano: int):
         self._ano = ano
@@ -265,6 +294,9 @@ class Favela:
         zmin, zmax = int(zs.min()), int(zs.max())
 
         return [xmin, xmax, ymin, ymax, zmin, zmax]
+
+    def icone(self):
+        pass
 
     def _load_geom_from_package(self):
         """
@@ -489,6 +521,11 @@ class Favela:
         # Aplica filtro Arrow (zero-copy)
         crop_mask_arrow = pa.array(crop_mask)
         return table.filter(crop_mask_arrow)
+    
+    def _write_arrow(self, dest: Path):
+        with pa.OSFile(dest.as_posix(), "wb") as f:
+            with ipc.RecordBatchFileWriter(f, self.table.schema) as writer:
+                writer.write_table(self.table)
 
 
 
