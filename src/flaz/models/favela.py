@@ -155,7 +155,6 @@ class Favela:
 
         return root.as_posix()
 
-
     def periodo(self, ano: int):
         self._ano = ano
         return self
