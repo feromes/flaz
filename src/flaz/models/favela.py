@@ -14,11 +14,11 @@ from flaz.config import RESOLUCAO_MINIMA
 import json
 from datetime import datetime
 import flaz  # para obter a versão
-from urllib.parse import urlparse
 from shapely.affinity import scale as scale_geom, translate
 from shapely.geometry import Polygon, MultiPolygon
 import math
 import colorsys
+
 
 SE = (-46.633308, -23.550520)  # Marco da Sé (lon, lat)
 
@@ -62,7 +62,7 @@ class Favela:
 
         if fill is None:
             fill = self.color(mode="hex")
-            
+
         # --- bounds ---
         minx, miny, maxx, maxy = geom.bounds
         w = maxx - minx
@@ -215,23 +215,18 @@ class Favela:
 
         return self
 
-    def persist(self, uri: str) -> str:
+    def persist(self, root: Path | str) -> str:
         """
-        Persiste a favela em um diretório local (file://),
+        Persiste a favela em um diretório local,
         seguindo a estrutura oficial da API FLAZ (v0).
 
         >>> from flaz import Favela
         >>> f = Favela("São Remo").periodo(2017).calc_flaz()
-        >>> out_uri = f.persist("file:flaz_tmp")
-        >>> out_uri
+        >>> out = f.persist("flaz_tmp")
+        >>> Path(out).name
         'flaz_tmp'
         """
-        parsed = urlparse(uri)
-
-        if parsed.scheme != "file":
-            raise ValueError("Por enquanto, apenas URIs file:// são suportadas.")
-
-        root = Path(parsed.path)
+        root = Path(root).expanduser().resolve()
         root.mkdir(parents=True, exist_ok=True)
 
         base = root / "favela" / self.nome_normalizado()
@@ -253,8 +248,7 @@ class Favela:
 
         # --- periodo ---
         if self._ano is not None:
-            p = str(self._ano)
-            per_dir = base / "periodos" / p
+            per_dir = base / "periodos" / str(self._ano)
             per_dir.mkdir(parents=True, exist_ok=True)
 
             arrow_path = per_dir / "flaz.arrow"

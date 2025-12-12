@@ -1,61 +1,127 @@
 import typer
 from flaz import Favela, Favelas
+from pathlib import Path
+import warnings
+
+warnings.filterwarnings(
+    "ignore",
+    message="Measured \\(M\\) geometry types are not supported.*",
+    category=UserWarning,
+    module="pyogrio"
+)
+
 
 app = typer.Typer(pretty_exceptions_enable=False)
+
+def resolve_api_path(api: str) -> Path:
+    """
+    Resolve o caminho da API como Path gravável.
+    Aceita caminho relativo ou absoluto.
+    """
+    return Path(api).expanduser().resolve()
+
 
 @app.command()
 def calc_hag(
     favela: str = typer.Option(..., "--favela", "-f", help="Nome da favela."),
     ano: int = typer.Option(..., "--ano", "-a", help="Ano do processamento."),
+    api: str = typer.Option(
+        "./flaz_api",
+        "--api",
+        help="Diretório raiz onde a API FLAZ será gravada."
+    ),
     force: bool = typer.Option(False, "--force", help="Ignora cache."),
 ):
     """
     Calcula a camada HAG para uma única favela.
     """
-    typer.echo(f"Calculando HAG para {favela} ({ano})...")
+    api_path = resolve_api_path(api)
 
-    f = Favela(favela).periodo(ano)
-    f.calc_flaz()
-    out = f"temp://{f.nome_normalizado()}_{ano}_hag.arrow"
-    f.persist(out)
+    typer.echo(f"→ API path: {api_path}")
 
-    typer.echo(f"✔ Concluído! Arquivo salvo em {out}")
+    f.persist(api_path)
+
+    typer.echo("✔ Concluído!")
 
 @app.command()
 def calc_more(
     ano: int = typer.Option(..., "--ano", "-a", help="Ano do processamento."),
+    api: str = typer.Option(
+        "./flaz_api",
+        "--api",
+        help="Diretório raiz onde a API FLAZ será gravada."
+    ),
     force: bool = typer.Option(False, "--force", help="Ignora cache."),
 ):
     """
     Processa todas as favelas listadas em Favelas.FAVELAS_MORE.
     """
-    nomes = Favelas.FAVELAS_MORE
-
-    typer.echo(f"Processando {len(nomes)} favelas (FAVELAS_MORE)...\n")
-
-    for nome in nomes:
-        typer.echo(f"→ {nome} ({ano})")
-
-        f = Favela(nome).periodo(ano)
-        f.calc_flaz()   # ou calc_hag se preferir, você escolhe
-        out = f"temp://{f.nome_normalizado()}_{ano}_hag.arrow"
-        f.persist(out)
-
-    # Gera o json de Favelas.More
     favelas = Favelas()
 
-    from pathlib import Path
-    tmp_dir = Path.cwd() / "flaz_tmp"
-    tmp_dir.mkdir(exist_ok=True)
+    typer.echo(f"Processando {len(favelas)} favelas")
 
-    json_out = tmp_dir / "favelas.json"
+    for f in favelas:
+        api_path = resolve_api_path(api)
 
-    with open(json_out, "w", encoding="utf-8") as f:        
-        f.write(favelas.to_json())  
-    typer.echo(f"\n✔ Arquivo JSON salvo em {json_out}")
+        f.periodo(ano)
+        typer.echo(f"→ API path: {api_path}")
+        typer.echo(f"→ {f} ({ano})")
 
-    typer.echo("\n✔ Concluído processamento de todas as favelas!")
+        f.calc_flaz()
+        f.persist(api_path)
 
+    # # Gera o json de Favelas.More dentro da API
+    # favelas = Favelas()
 
-if __name__ == "__main__":
-    app()
+    # root = Path(api)
+    # json_out = root / "favelas.json"
+    # json_out.parent.mkdir(parents=True, exist_ok=True)
+
+    # json_out.write_text(
+    #     favelas.to_json(),
+    #     encoding="utf-8"
+    # )
+
+    # typer.echo(f"\n✔ Arquivo JSON salvo em {json_out}")
+    # typer.echo("✔ Concluído processamento de todas as favelas!")
+
+# @app.command()
+# def calc_more(
+#     ano: int = typer.Option(..., "--ano", "-a", help="Ano do processamento."),
+#     api: str = typer.Option(
+#         "./flaz_api",
+#         "--api",
+#         help="Diretório raiz onde a API FLAZ será gravada."
+#     ),
+#     force: bool = typer.Option(False, "--force", help="Ignora cache."),
+# ):
+#     """
+#     Processa todas as favelas listadas em Favelas.FAVELAS_MORE.
+#     """
+#     favelas = Favelas()
+
+#     typer.echo(f"Processando {len(favelas)} favelas")
+
+#     for f in favelas:
+#         api_path = resolve_api_path(api)
+
+#         typer.echo(f"→ API path: {api_path}")
+#         typer.echo(f"→ {f.nome} ({ano})")
+
+#         f.calc_flaz()
+#         f.persist(api_uri)
+
+#     # Gera o json de Favelas.More dentro da API
+#     favelas = Favelas()
+
+#     root = Path(api)
+#     json_out = root / "favelas.json"
+#     json_out.parent.mkdir(parents=True, exist_ok=True)
+
+#     json_out.write_text(
+#         favelas.to_json(),
+#         encoding="utf-8"
+#     )
+
+#     typer.echo(f"\n✔ Arquivo JSON salvo em {json_out}")
+#     typer.echo("✔ Concluído processamento de todas as favelas!")
