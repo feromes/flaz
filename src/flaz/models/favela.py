@@ -44,10 +44,10 @@ class Favela:
     def num_points(self) -> int:
         """
         Número de pontos da nuvem associada à favela.
-        Só existe após o calc_flaz().
+        Só existe após calc_flaz().
         """
-        if not hasattr(self, "flaz") or self.flaz is None:
-            return 0  # ontologicamente: ainda não há nuvem materializada
+        if not hasattr(self, "table") or self.table is None:
+            return 0
         return self.table.num_rows
 
     def icone(self, size: int = 200, fill: str | None = None) -> str:
@@ -266,6 +266,8 @@ class Favela:
         return self
 
     def to_card(self) -> dict:
+
+        bb = self.compute_bounding_box(self.table)
         geom = getattr(self, "geometry", None)
 
         if geom is not None and not geom.is_empty:
@@ -288,6 +290,7 @@ class Favela:
         return {
             "id": self.nome_normalizado(),
             "nome": self.nome,
+            "nome_secundario": self.fv_nome_sec if hasattr(self, "fv_nome_sec") else None,
             "entidade": "Favela",
 
             "icon": f"favela/{self.nome_normalizado()}/{self.nome_normalizado()}.svg",
@@ -297,10 +300,20 @@ class Favela:
             "centroid": centroid,
 
             "dist_se_m": dist_se_m,
+            "area_m2": self.geometry.area,
 
             "periodos": self.periodos if hasattr(self, "periodos") else (
                 [self._ano] if self._ano is not None else []
             ),
+
+            "data_geracao": datetime.now().strftime("%Y-%m-%d"),
+            "bb_normalizado": bb,
+            "resolucao": 12.5,             # constante atual do FLAZ
+            "offset": [0, 0, 0],           # por enquanto fixo
+            "src": "EPSG:31983",
+            ## TODO: calcular o número de pontos corretamente
+            "point_count": self.table.num_rows,
+            "versao_flaz": flaz.__version__
         }
 
     def calc_mds(self, resolution: float = 0.5, force_recalc: bool = False):

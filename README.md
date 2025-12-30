@@ -80,7 +80,7 @@ fl.calc_hag()
 ou diretamente pela linha de comando:
 
 ```bash
-flaz calc-more --favela "São Remo" --ano 2020
+flaz calc-hag --favela "São Remo" --ano 2017
 ```
 
 
@@ -93,7 +93,13 @@ flaz calc-vielas --favela "Heliópolis" --force --ano [2017, 2020]
 #### Processando um cluster inteiro (distribuído)
 
 ```bash
-flazz calc-all --distrito "Grajaú" --force --use-cloud-run --destino "R2"
+flaz calc-all --distrito "Grajaú" --force --use-cloud-run --destino "R2"
+```
+
+#### Processando API para uso no FVIz
+
+```bash
+flaz calc-more --ano 2017 --api ../fviz/apps/web/public/api
 ```
 
 ## Princípios da Biblioteca
