@@ -171,6 +171,15 @@ def calc_h3(
     typer.echo(f"✔ {len(active_h3)} hexágonos contêm favelas")
 
     # ------------------------------------------------------------------
+    # 4.5️⃣ Materializar lista de favelas por hexágono
+    # ------------------------------------------------------------------
+
+    def favela_list(h3_id):
+        return h3_index.get(h3_id, [])
+
+    gdf_h3["favelas"] = gdf_h3["h3"].apply(favela_list)
+
+    # ------------------------------------------------------------------
     # 5️⃣ Aplicar máscara de cor
     # ------------------------------------------------------------------
     def mask_color(row):
