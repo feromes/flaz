@@ -56,23 +56,43 @@ class Favelas:
         "Abacateiro",
     ]
 
-    def __init__(self, favelas=[], distritos=[], sub_prefeituras=[], db_path: Path = None):
+    def __init__(
+        self,
+        favelas=None,
+        distritos=None,
+        sub_prefeituras=None,
+        *,
+        all: bool = False,
+        db_path: Path = None,
+    ):
         self.db_path = db_path or (files("flaz.data") / "SIRGAS_GPKG_favela.gpkg")
+
+        favelas = favelas or []
+        distritos = distritos or []
+        sub_prefeituras = sub_prefeituras or []
+
+        # 1️⃣ carrega TODAS as geometrias
         gdf = gpd.read_file(self.db_path)
         gdf = gdf.dissolve(by="fv_nome").reset_index()
 
-        # se nenhum nome de favela for fornecido, carrega as em Favelas.FAVELAS_MORE
-        if not favelas and not distritos and not sub_prefeituras:
-            favelas = Favelas.FAVELAS_MORE
+        # 2️⃣ aplica filtro SOMENTE se all=False
+        if not all:
+            if not favelas and not distritos and not sub_prefeituras:
+                favelas = Favelas.FAVELAS_MORE
 
-        gdf = Favelas.filtrar(gdf, favelas)
+            gdf = Favelas.filtrar(gdf, favelas)
 
+        # 3️⃣ SEMPRE define o estado espacial
         self.gdf = gdf
 
+        # 4️⃣ só instancia objetos Favela quando faz sentido
         self.favelas = []
-        for _, row in gdf.iterrows():
-            favela = Favela(nome=row["fv_nome"])
-            self.favelas.append(favela)
+        if not all:
+            for _, row in gdf.iterrows():
+                favela = Favela(nome=row["fv_nome"])
+                self.favelas.append(favela)
+
+
 
     def __iter__(self):
         for favela in self.favelas:
