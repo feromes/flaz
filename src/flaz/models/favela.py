@@ -171,6 +171,9 @@ class Favela:
         table = self._crop_points_to_geometry(table, mask)
         self.table = table  # atualiza tabela intermediária
 
+        # 🔹 estatísticas físicas (antes da normalização)
+        self.elevation = self._compute_elevation_stats(table)
+
         # 2) Normaliza coordenadas ANTES do Morton
         table = self._normalize_coordinates(table)
         self.table = table  # salva estado intermediário
@@ -311,8 +314,8 @@ class Favela:
             "resolucao": 12.5,             # constante atual do FLAZ
             "offset": [0, 0, 0],           # por enquanto fixo
             "src": "EPSG:31983",
-            ## TODO: calcular o número de pontos corretamente
             "point_count": self.table.num_rows,
+            "elevation": getattr(self, "elevation", None),
             "versao_flaz": flaz.__version__
         }
 
@@ -680,6 +683,17 @@ class Favela:
             with ipc.RecordBatchFileWriter(f, self.table.schema) as writer:
                 writer.write_table(self.table)
 
+    def _compute_elevation_stats(self, table: pa.Table):
+        z = table["z"].to_numpy(zero_copy_only=False)
+
+        if len(z) == 0:
+            return None
+
+        return {
+            "min": float(z.min()),
+            "max": float(z.max()),
+            "ref": "NMM",
+        }
 
 
 
