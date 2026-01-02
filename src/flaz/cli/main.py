@@ -1,8 +1,11 @@
 import typer
-from flaz import Favela, Favelas
 from pathlib import Path
 import warnings
 import json
+
+import geopandas as gpd
+
+from flaz import Favela, Favelas
 
 warnings.filterwarnings(
     "ignore",
@@ -11,8 +14,8 @@ warnings.filterwarnings(
     module="pyogrio"
 )
 
-
 app = typer.Typer(pretty_exceptions_enable=False)
+
 
 def resolve_api_path(api: str) -> Path:
     """
@@ -20,6 +23,11 @@ def resolve_api_path(api: str) -> Path:
     Aceita caminho relativo ou absoluto.
     """
     return Path(api).expanduser().resolve()
+
+
+# ------------------------------------------------------------------------------
+# HAG — uma favela
+# ------------------------------------------------------------------------------
 
 @app.command()
 def calc_hag(
@@ -53,6 +61,11 @@ def calc_hag(
 
     typer.echo("✔ Concluído!")
 
+
+# ------------------------------------------------------------------------------
+# HAG — múltiplas favelas
+# ------------------------------------------------------------------------------
+
 @app.command()
 def calc_more(
     ano: int = typer.Option(..., "--ano", "-a", help="Ano do processamento."),
@@ -67,24 +80,21 @@ def calc_more(
     Processa todas as favelas listadas em Favelas.FAVELAS_MORE.
     """
     favelas = Favelas()
+    api_path = resolve_api_path(api)
 
     typer.echo(f"Processando {len(favelas)} favelas")
+    typer.echo(f"→ API path: {api_path}")
 
     cards = []
 
     for f in favelas:
-        api_path = resolve_api_path(api)
-
-        f.periodo(ano)
-        typer.echo(f"→ API path: {api_path}")
         typer.echo(f"→ {f} ({ano})")
 
+        f.periodo(ano)
         f.calc_flaz()
         f.persist(api_path)
 
         cards.append(f.to_card())
-
-    # cards = Favelas().to_cards()
 
     cards_path = api_path / "favelas.json"
     cards_path.write_text(
@@ -92,18 +102,108 @@ def calc_more(
         encoding="utf-8"
     )
 
-    # # Gera o json de Favelas.More dentro da API
-    # favelas = Favelas()
+    typer.echo("✔ Concluído processamento de todas as favelas!")
 
-    # root = Path(api)
-    # json_out = root / "favelas.json"
-    # json_out.parent.mkdir(parents=True, exist_ok=True)
 
-    # json_out.write_text(
-    #     favelas.to_json(),
-    #     encoding="utf-8"
-    # )
+# ------------------------------------------------------------------------------
+# H3 — grid + cor + índice de busca
+# ------------------------------------------------------------------------------
 
-    # typer.echo(f"\n✔ Arquivo JSON salvo em {json_out}")
-    # typer.echo("✔ Concluído processamento de todas as favelas!")
+@app.command("calc-h3")
+def calc_h3(
+    gpkg_path: Path = typer.Argument(
+        Path("data/geoportal_subprefeitura_v2.gpkg"),
+        exists=True,
+        readable=True,
+        help="GPKG com limites administrativos (default: data/geoportal_subprefeitura_v2.gpkg)",
+    ),
+    resolution: int = typer.Option(7, help="Resolução H3"),
+    buffer_m: float = typer.Option(1200, help="Buffer em metros"),
+    out_dir: Path = typer.Option(
+        Path("data/derived/h3"),
+        help="Diretório de saída",
+    ),
+):
+    """
+    Calcula o grid H3 do território:
+    - gera hexágonos
+    - colore apenas os que contêm favelas
+    - cria índice H3 → favelas
+    """
 
+    typer.echo("🔷 Calculando grid H3 via Favelas.to_h3()...")
+
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    # ------------------------------------------------------------------
+    # 1️⃣ Domínio
+    # ------------------------------------------------------------------
+    favelas = Favelas()
+
+    # ------------------------------------------------------------------
+    # 2️⃣ Grid H3 (com cor geodésica base)
+    # ------------------------------------------------------------------
+    gdf_h3 = favelas.to_h3(
+        gpkg_path=gpkg_path,
+        resolution=resolution,
+        buffer_m=buffer_m,
+        out_dir=out_dir,
+    )
+
+    typer.echo(f"✔ {len(gdf_h3)} hexágonos gerados")
+
+    # ------------------------------------------------------------------
+    # 3️⃣ GDF das favelas
+    # ------------------------------------------------------------------
+    gdf_favelas = favelas.to_gdf()
+    typer.echo(f"✔ {len(gdf_favelas)} favelas carregadas")
+
+    # ------------------------------------------------------------------
+    # 4️⃣ Índice H3 → favelas
+    # ------------------------------------------------------------------
+    h3_index = favelas.build_h3_index(
+        gdf_h3=gdf_h3,
+        gdf_favelas=gdf_favelas,
+    )
+
+    active_h3 = set(h3_index.keys())
+    typer.echo(f"✔ {len(active_h3)} hexágonos contêm favelas")
+
+    # ------------------------------------------------------------------
+    # 5️⃣ Aplicar máscara de cor
+    # ------------------------------------------------------------------
+    def mask_color(row):
+        if row["h3"] in active_h3:
+            return row["color"]          # mantém cor geodésica
+        return "#B3B3B3"                  # neutro / escuro
+
+    gdf_h3["color"] = gdf_h3.apply(mask_color, axis=1)
+
+    # (opcional, se quiser flag explícita)
+    gdf_h3["has_favela"] = gdf_h3["h3"].isin(active_h3)
+
+    # ------------------------------------------------------------------
+    # 6️⃣ Persistência
+    # ------------------------------------------------------------------
+    parquet_path = out_dir / f"h3_r{resolution}_buf{int(buffer_m)}.parquet"
+    geojson_path = out_dir / f"h3_r{resolution}_buf{int(buffer_m)}.geojson"
+    index_path = out_dir / "h3_favela_index.json"
+
+    gdf_h3.to_parquet(parquet_path)
+    gdf_h3.to_file(geojson_path, driver="GeoJSON")
+
+    index_path.write_text(
+        json.dumps(h3_index, ensure_ascii=False, indent=2),
+        encoding="utf-8"
+    )
+
+    typer.echo(f"📦 Parquet salvo em: {parquet_path}")
+    typer.echo(f"🗺️ GeoJSON salvo em: {geojson_path}")
+    typer.echo(f"🔗 Índice H3→Favelas salvo em: {index_path}")
+    typer.echo("✔ Concluído!")
+
+
+
+if __name__ == "__main__":
+    app()

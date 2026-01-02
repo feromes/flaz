@@ -18,6 +18,8 @@ from shapely.affinity import scale as scale_geom, translate
 from shapely.geometry import Polygon, MultiPolygon
 import math
 import colorsys
+from flaz.compute.geo_color import geo_color_from_point
+
 
 
 SE = (333060.9, 7392952.6)  # coordenadas do SE (m)
@@ -123,34 +125,10 @@ class Favela:
 
         cx, cy = geom.centroid.coords[0]
 
-        dx = cx - SE[0]
-        dy = cy - SE[1]
-
-        # Hue: direção geográfica
-        angle = math.atan2(dy, dx)
-        hue = (math.degrees(angle) + 360) % 360
-
-        # Value: distância radial
-        dist = math.hypot(dx, dy)
-        MAX_DIST = 25_000  # metros (ajustável depois)
-        v = min(dist / MAX_DIST, 1.0)
-        value = 0.25 + 0.75 * (v ** 0.7)
-
-        saturation = 0.85
-
-        r, g, b = colorsys.hsv_to_rgb(
-            hue / 360,
-            saturation,
-            value
-        )
-
-        if mode == "rgb":
-            return int(r * 255), int(g * 255), int(b * 255)
-
-        return "#{:02x}{:02x}{:02x}".format(
-            int(r * 255),
-            int(g * 255),
-            int(b * 255)
+        return geo_color_from_point(
+            cx,
+            cy,
+            mode=mode
         )
 
     def calc_flaz(self, force_recalc: bool = False):
