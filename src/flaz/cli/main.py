@@ -185,7 +185,7 @@ def calc_h3(
     def mask_color(row):
         if row["h3"] in active_h3:
             return row["color"]          # mantém cor geodésica
-        return "#B3B3B3"                  # neutro / escuro
+        return "#EDEDED"                  # neutro / escuro
 
     gdf_h3["color"] = gdf_h3.apply(mask_color, axis=1)
 

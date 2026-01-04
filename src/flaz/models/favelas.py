@@ -185,7 +185,7 @@ class Favelas:
         # 4️⃣ calcula a cor geodésica por centroide
         def hex_color(geom):
             if geom is None or geom.is_empty:
-                return "#444444"
+                return "#EDEDED"
             cx, cy = geom.centroid.coords[0]
             return geo_color_from_point(cx, cy, mode="hex")
 
