@@ -192,27 +192,47 @@ def calc_h3(
     # (opcional, se quiser flag explícita)
     gdf_h3["has_favela"] = gdf_h3["h3"].isin(active_h3)
 
+    def serialize_hexes(gdf, resolution, buffer_m):
+        return {
+            "resolution": resolution,
+            "buffer_m": buffer_m,
+            "count": len(gdf),
+            "hexes": [
+                {
+                    "h3": row.h3,
+                    "color": row.color,
+                    "has_favela": bool(row.has_favela),
+                    "favelas": row.favelas,
+                }
+                for row in gdf.itertuples()
+            ]
+        }
+
     # ------------------------------------------------------------------
     # 6️⃣ Persistência
     # ------------------------------------------------------------------
     parquet_path = out_dir / f"h3_r{resolution}_buf{int(buffer_m)}.parquet"
     geojson_path = out_dir / f"h3_r{resolution}_buf{int(buffer_m)}.geojson"
+    hexjson_path = out_dir / f"h3_r{resolution}_buf{int(buffer_m)}.json"
     index_path = out_dir / "h3_favela_index.json"
 
+    # formatos pesados (debug / QGIS)
     gdf_h3.to_parquet(parquet_path)
     gdf_h3.to_file(geojson_path, driver="GeoJSON")
 
-    index_path.write_text(
-        json.dumps(h3_index, ensure_ascii=False, indent=2),
+    # formato leve (API / FVIZ)
+    hex_payload = serialize_hexes(gdf_h3, resolution, buffer_m)
+
+    hexjson_path.write_text(
+        json.dumps(hex_payload, ensure_ascii=False),
         encoding="utf-8"
     )
 
+
     typer.echo(f"📦 Parquet salvo em: {parquet_path}")
     typer.echo(f"🗺️ GeoJSON salvo em: {geojson_path}")
+    typer.echo(f"🧊 Hex JSON salvo em: {hexjson_path}")
     typer.echo(f"🔗 Índice H3→Favelas salvo em: {index_path}")
-    typer.echo("✔ Concluído!")
-
-
 
 if __name__ == "__main__":
     app()
