@@ -68,17 +68,10 @@ def calc_hag(
 
 @app.command()
 def calc_more(
-    ano: int = typer.Option(..., "--ano", "-a", help="Ano do processamento."),
-    api: str = typer.Option(
-        "./flaz_api",
-        "--api",
-        help="Diretório raiz onde a API FLAZ será gravada."
-    ),
-    force: bool = typer.Option(False, "--force", help="Ignora cache."),
+    ano: int = typer.Option(..., "--ano", "-a"),
+    api: str = typer.Option("./flaz_api", "--api"),
+    force: bool = typer.Option(False, "--force"),
 ):
-    """
-    Processa todas as favelas listadas em Favelas.FAVELAS_MORE.
-    """
     favelas = Favelas()
     api_path = resolve_api_path(api)
 
@@ -91,13 +84,27 @@ def calc_more(
         typer.echo(f"→ {f} ({ano})")
 
         f.periodo(ano)
-        f.calc_flaz()
+
+        periodo_dir = (
+            api_path
+            / "favela"
+            / f.nome_normalizado()
+            / "periodos"
+            / str(ano)
+        )
+        periodo_dir.mkdir(parents=True, exist_ok=True)
+
+        f._build_favela_lidar_base(periodo_dir, force=force)
+        f.calc_flaz(force_recalc=force)
+
+        # f.calc_mdt_png(periodo_dir)
+        # f.calc_mds_png(periodo_dir)
+
         f.persist(api_path)
 
         cards.append(f.to_card())
 
-    cards_path = api_path / "favelas.json"
-    cards_path.write_text(
+    (api_path / "favelas.json").write_text(
         json.dumps(cards, ensure_ascii=False, indent=2),
         encoding="utf-8"
     )
