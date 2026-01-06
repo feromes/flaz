@@ -232,8 +232,13 @@ class Favela:
                 self._write_arrow(arrow_path)
 
             # mdt
-            if hasattr(self, "mdt"):
-                self._persist_mdt(per_dir)
+            if (per_dir / "mdt.tif").exists():
+                self._persist_mdt_png_from_tif(per_dir)
+
+            # mds
+            if (per_dir / "mds.tif").exists():
+                self._persist_mds_png_from_tif(per_dir)
+
 
             # (futuro)
             # if hasattr(self, "mds"):
@@ -800,7 +805,133 @@ class Favela:
             "mdt": mdt_path,
         }
 
+    def _persist_mdt_png_from_tif(self, out_dir: Path):
+        """
+        Converte o MDT GeoTIFF em PNG RGBA + metadata JSON
+        para consumo direto no FVIZ.
+        """
 
+        from PIL import Image
+        import numpy as np
+        import rasterio
+        import json
+
+        tif_path = out_dir / "mdt.tif"
+        if not tif_path.exists():
+            return
+
+        png_path = out_dir / "mdt.png"
+        meta_path = out_dir / "mdt.json"
+
+        with rasterio.open(tif_path) as src:
+            Z = src.read(1).astype("float32")
+            nodata = src.nodata
+            bounds = src.bounds
+            res = src.res
+            crs = src.crs
+
+        # máscara válida
+        valid = ~np.isnan(Z)
+        if nodata is not None:
+            valid &= Z != nodata
+
+        if valid.sum() == 0:
+            return
+
+        zmin = float(Z[valid].min())
+        zmax = float(Z[valid].max())
+
+        img = np.zeros_like(Z, dtype="uint8")
+        img[valid] = ((Z[valid] - zmin) / (zmax - zmin) * 255).astype("uint8")
+
+        alpha = (valid * 255).astype("uint8")
+
+        rgba = np.dstack([img, img, img, alpha])
+
+        Image.fromarray(rgba, mode="RGBA").save(png_path)
+
+        meta = {
+            "type": "MDT",
+            "bounds": [bounds.left, bounds.bottom, bounds.right, bounds.top],
+            "resolution": list(res),
+            "nodata": nodata,
+            "stats": {
+                "min": zmin,
+                "max": zmax,
+            },
+            "crs": str(crs),
+            "format": "PNG-RGBA",
+            "recommended_colormap": "terrain"
+        }
+
+        meta_path.write_text(
+            json.dumps(meta, indent=2, ensure_ascii=False),
+            encoding="utf-8"
+        )
+
+    def _persist_mds_png_from_tif(self, out_dir: Path):
+        """
+        Converte o MDS GeoTIFF em PNG RGBA + metadata JSON
+        para consumo direto no FVIZ.
+        """
+
+        from PIL import Image
+        import numpy as np
+        import rasterio
+        import json
+
+        tif_path = out_dir / "mds.tif"
+        if not tif_path.exists():
+            return
+
+        png_path = out_dir / "mds.png"
+        meta_path = out_dir / "mds.json"
+
+        with rasterio.open(tif_path) as src:
+            Z = src.read(1).astype("float32")
+            nodata = src.nodata
+            bounds = src.bounds
+            res = src.res
+            crs = src.crs
+
+        # máscara válida
+        valid = ~np.isnan(Z)
+        if nodata is not None:
+            valid &= Z != nodata
+
+        if valid.sum() == 0:
+            return
+
+        zmin = float(Z[valid].min())
+        zmax = float(Z[valid].max())
+
+        img = np.zeros_like(Z, dtype="uint8")
+        img[valid] = ((Z[valid] - zmin) / (zmax - zmin) * 255).astype("uint8")
+
+        alpha = (valid * 255).astype("uint8")
+
+        rgba = np.dstack([img, img, img, alpha])
+
+        Image.fromarray(rgba, mode="RGBA").save(png_path)
+
+        meta = {
+            "type": "MDS",
+            "bounds": [bounds.left, bounds.bottom, bounds.right, bounds.top],
+            "resolution": list(res),
+            "nodata": nodata,
+            "stats": {
+                "min": zmin,
+                "max": zmax,
+            },
+            "crs": str(crs),
+            "format": "PNG-RGBA",
+            "recommended_colormap": "gray"
+        }
+
+        meta_path.write_text(
+            json.dumps(meta, indent=2, ensure_ascii=False),
+            encoding="utf-8"
+        )
 
 
 
