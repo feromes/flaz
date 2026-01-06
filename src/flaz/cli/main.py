@@ -201,7 +201,7 @@ def calc_h3(
                 {
                     "h3": row.h3,
                     "color": row.color,
-                    "center": [row.geometry.centroid.y, row.geometry.centroid.x],
+                    "center": [row.geometry.centroid.x, row.geometry.centroid.y],
                     "has_favela": bool(row.has_favela),
                     "favelas": row.favelas,
                 }

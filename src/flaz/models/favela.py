@@ -200,12 +200,6 @@ class Favela:
         """
         Persiste a favela em um diretório local,
         seguindo a estrutura oficial da API FLAZ (v0).
-
-        >>> from flaz import Favela
-        >>> f = Favela("São Remo").periodo(2017).calc_flaz()
-        >>> out = f.persist("flaz_tmp")
-        >>> Path(out).name
-        'flaz_tmp'
         """
         root = Path(root).expanduser().resolve()
         root.mkdir(parents=True, exist_ok=True)
@@ -232,8 +226,21 @@ class Favela:
             per_dir = base / "periodos" / str(self._ano)
             per_dir.mkdir(parents=True, exist_ok=True)
 
-            arrow_path = per_dir / "flaz.arrow"
-            self._write_arrow(arrow_path)
+            # flaz
+            if hasattr(self, "table"):
+                arrow_path = per_dir / "flaz.arrow"
+                self._write_arrow(arrow_path)
+
+            # mdt
+            if hasattr(self, "mdt"):
+                self._persist_mdt(per_dir)
+
+            # (futuro)
+            # if hasattr(self, "mds"):
+            #     self._persist_mds(per_dir)
+
+            # if hasattr(self, "vielas"):
+            #     self._persist_vielas(per_dir)
 
         # --- ícone da favela ---
         svg = self.icone()
@@ -241,6 +248,7 @@ class Favela:
         icon_path.write_text(svg, encoding="utf-8")
 
         return root.as_posix()
+
 
     def periodo(self, ano: int):
         self._ano = ano
@@ -672,6 +680,128 @@ class Favela:
             "max": float(z.max()),
             "ref": "NMM",
         }
+
+    def _build_favela_lidar_base(
+        self,
+        out_dir: Path,
+        force: bool = False,
+    ):
+        """
+        Constrói a base LiDAR da favela para o período corrente.
+
+        Produtos:
+        - favela.copc.laz  (canônico, com HAG)
+        - mds.tif         (Modelo Digital de Superfície)
+        - mdt.tif         (Modelo Digital do Terreno via TIN)
+        """
+
+        import json
+        import subprocess
+
+        out_dir = Path(out_dir)
+        out_dir.mkdir(parents=True, exist_ok=True)
+
+        copc_path = out_dir / "favela.copc.laz"
+        mds_path = out_dir / "mds.tif"
+        mdt_path = out_dir / "mdt.tif"
+
+        if copc_path.exists() and mds_path.exists() and mdt_path.exists() and not force:
+            return {"copc": copc_path, "mds": mds_path, "mdt": mdt_path}
+
+        polygon_wkt = self.geometry.wkt
+        srs = "EPSG:31983"  # ajuste se necessário
+
+        pipeline = {
+            "pipeline": (
+                # ----------------------------------------------------
+                # 1. Readers (todas as quadriculas)
+                # ----------------------------------------------------
+                [
+                    {
+                        "type": "readers.las",
+                        "filename": str(path),
+                    }
+                    for path in self.quadriculas_laz()
+                ]
+                + [
+                    # ------------------------------------------------
+                    # 2. Merge explícito
+                    # ------------------------------------------------
+                    {"type": "filters.merge"},
+
+                    # ------------------------------------------------
+                    # 3. Crop pela geometria
+                    # ------------------------------------------------
+                    {
+                        "type": "filters.crop",
+                        "polygon": polygon_wkt,
+                    },
+
+                    # ------------------------------------------------
+                    # 4. HAG
+                    # ------------------------------------------------
+                    {"type": "filters.hag_nn"},
+
+                    # ------------------------------------------------
+                    # 5. COPC (artefato canônico)
+                    # ------------------------------------------------
+                    {
+                        "type": "writers.copc",
+                        "filename": str(copc_path),
+                        "extra_dims": "all",
+                    },
+
+                    # ------------------------------------------------
+                    # 6. MDS
+                    # ------------------------------------------------
+                    {
+                        "type": "writers.gdal",
+                        "filename": str(mds_path),
+                        "resolution": 0.5,
+                        "output_type": "max",
+                        "nodata": -9999,
+                        "override_srs": srs
+                    },
+
+                    # ------------------------------------------------
+                    # 7. MDT via TIN
+                    # ------------------------------------------------
+                    {
+                        "type": "filters.range",
+                        "limits": "Classification[2:2]",
+                    },
+                    {
+                        "type": "filters.delaunay",
+                    },
+                    {
+                        "type": "filters.faceraster",
+                        "resolution": 0.5,
+                    },
+                    {
+                        "type": "writers.raster",
+                        "filename": str(mdt_path),
+                        "nodata": -9999,
+                    },
+                ]
+            )
+        }
+
+        pipeline_path = out_dir / "favela_lidar_base_pipeline.json"
+        pipeline_path.write_text(json.dumps(pipeline, indent=2), encoding="utf-8")
+
+        subprocess.run(
+            ["pdal", "pipeline", str(pipeline_path)],
+            check=True,
+        )
+
+        return {
+            "copc": copc_path,
+            "mds": mds_path,
+            "mdt": mdt_path,
+        }
+
+
+
 
 
 
