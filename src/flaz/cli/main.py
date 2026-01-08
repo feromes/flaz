@@ -90,9 +90,7 @@ def calc_more(
 
         f._build_favela_lidar_base(f.periodo_dir(), force=force)
         f.calc_flaz(force_recalc=force)
-
-        # f.calc_mdt_png(periodo_dir)
-        # f.calc_mds_png(periodo_dir)
+        f.calc_hag(force_recalc=force)
 
         f.persist(api_path)
 

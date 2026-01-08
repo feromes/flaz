@@ -271,6 +271,11 @@ class Favela:
             if (per_dir / "mds.tif").exists():
                 self._persist_mds_png_from_tif(per_dir)
 
+            # HAG
+            if hasattr(self, "hag_table"):
+                hag_path = per_dir / "hag_flaz.arrow"
+                self._write_hag_arrow(hag_path)
+
 
             # (futuro)
             # if hasattr(self, "mds"):
@@ -325,6 +330,8 @@ class Favela:
             "bbox": bbox,
             "centroid": centroid,
 
+            "hag": getattr(self, "hag_stats", None),
+
             "dist_se_m": dist_se_m,
             "area_m2": self.geometry.area,
 
@@ -375,6 +382,53 @@ class Favela:
     def calc_vielas(self, w_max=6.0):
         from ..features.vielas import calc_vielas
         return calc_vielas(self)
+
+    def calc_hag(self, force_recalc: bool = False):
+        """
+        Calcula o HAG normalizado (uint8) e armazena em self.hag_table
+        """
+        if hasattr(self, "hag_table") and not force_recalc:
+            return self
+
+        if not hasattr(self, "table"):
+            raise RuntimeError("Execute calc_flaz() antes de calc_hag().")
+
+        import numpy as np
+        import pyarrow as pa
+
+        if "hag" not in self.table.column_names:
+            raise ValueError("Coluna 'hag' não encontrada na tabela.")
+
+        hag = self.table["hag"].to_numpy(zero_copy_only=False)
+
+        valid = ~np.isnan(hag)
+        if valid.sum() == 0:
+            raise ValueError("Todos os valores de HAG são NaN.")
+
+        hmin = float(hag[valid].min())
+        hmax = float(hag[valid].max())
+
+        if hmax == hmin:
+            cmap = np.zeros(len(hag), dtype="uint8")
+        else:
+            cmap = np.zeros(len(hag), dtype="uint8")
+            cmap[valid] = ((hag[valid] - hmin) / (hmax - hmin) * 255).astype("uint8")
+
+        # guarda stats físicos
+        self.hag_stats = {
+            "min": hmin,
+            "max": hmax,
+            "unit": "m",
+        }
+
+        # cria tabela HAG (mesma geometria!)
+        self.hag_table = self.table.select(["x", "y", "z"]).append_column(
+            "hag_colormap",
+            pa.array(cmap, type=pa.uint8())
+        )
+
+        return self
+
 
     def quadriculas_laz(self):
 
@@ -1012,7 +1066,10 @@ class Favela:
             encoding="utf-8"
         )
 
+    def _write_hag_arrow(self, dest: Path):
+        if not hasattr(self, "hag_table"):
+            raise RuntimeError("Execute calc_hag() antes de persistir.")
 
-
-
-
+        with pa.OSFile(dest.as_posix(), "wb") as f:
+            with ipc.RecordBatchFileWriter(f, self.hag_table.schema) as writer:
+                writer.write_table(self.hag_table)
