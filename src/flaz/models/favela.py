@@ -19,8 +19,7 @@ from shapely.geometry import Polygon, MultiPolygon
 import math
 import colorsys
 from flaz.compute.geo_color import geo_color_from_point
-
-
+import subprocess
 
 SE = (333060.9, 7392952.6)  # coordenadas do SE (m)
 
@@ -117,6 +116,39 @@ class Favela:
     <path d="{d}" fill="{fill}" fill-rule="evenodd"/>
     </svg>
     """
+
+    def set_api_path(self, api_path: Path | str):
+        """
+        Define o diretório raiz da API FLAZ para esta instância.
+        Deve ser chamado pelo orquestrador (CLI / API).
+        """
+        self.api_path = Path(api_path).expanduser().resolve()
+        return self
+    
+    def favela_dir(self) -> Path:
+        """
+        Diretório base da favela dentro da API.
+        Ex: {api_path}/favela/sao_remo
+        """
+        if not hasattr(self, "api_path"):
+            raise RuntimeError(
+                "api_path não definido. Use f.set_api_path(api_path) antes."
+            )
+
+        return self.api_path / "favela" / self.nome_normalizado()
+    
+    def periodo_dir(self, ano: int | None = None) -> Path:
+        """
+        Diretório do período da favela.
+        Ex: {api_path}/favela/sao_remo/periodos/2017
+        """
+        ano = ano if ano is not None else self._ano
+
+        if ano is None:
+            raise ValueError("Ano não definido. Use .periodo(ano).")
+
+        return self.favela_dir() / "periodos" / str(ano)
+
 
     def color(self, mode: str = "hex") -> str:
         geom = getattr(self, "geometry", None)
@@ -486,42 +518,56 @@ class Favela:
 
     def _load_points(self):
         """
-        Carrega os pontos LAZ da favela no período corrente
-        e retorna um PyArrow Table com X, Y, Z e Classification.
+        Carrega os pontos LAZ/COPC canônicos da favela
+        (gerados via PDAL em _build_favela_lidar_base)
+        e retorna um PyArrow Table com X, Y, Z, Classification (+ HAG se existir).
         """
 
-        paths = self.quadriculas_laz()  # já resolvidos com path absoluto
+        if self._ano is None:
+            raise ValueError("Ano não definido. Use .periodo(ano) antes.")
 
-        xs, ys, zs, cls = [], [], [], []
+        # caminho esperado da base canônica
+        base_dir = self.periodo_dir(self._ano) 
 
-        for path in paths:
-            las = laspy.read(Path(path))
+        copc_path = base_dir / "favela.copc.laz"
 
-            # Conversão correta de ScaledArrayView -> numpy.ndarray
-            xs.append(np.asarray(las.x, dtype="float64"))
-            ys.append(np.asarray(las.y, dtype="float64"))
-            zs.append(np.asarray(las.z, dtype="float64"))
+        if not copc_path.exists():
+            raise FileNotFoundError(
+                f"COPC canônico não encontrado em {copc_path}. "
+                "Execute _build_favela_lidar_base antes."
+            )
 
-            if "classification" in las.point_format.dimension_names:
-                cls.append(np.asarray(las.classification, dtype="uint8"))
-            else:
-                cls.append(np.zeros(len(las.x), dtype="uint8"))
+        las = laspy.read(copc_path)
 
-        X = np.concatenate(xs)
-        Y = np.concatenate(ys)
-        Z = np.concatenate(zs)
-        C = np.concatenate(cls)
+        # coordenadas (já recortadas, alinhadas com MDT/MDS)
+        X = np.asarray(las.x, dtype="float64")
+        Y = np.asarray(las.y, dtype="float64")
+        Z = np.asarray(las.z, dtype="float64")
 
-        table = pa.Table.from_pydict(
-            {
-                "x": X,
-                "y": Y,
-                "z": Z,
-                "classification": C,
-            }
-        )
+        # classificação
+        if "classification" in las.point_format.dimension_names:
+            C = np.asarray(las.classification, dtype="uint8")
+        else:
+            C = np.zeros(len(X), dtype="uint8")
+
+        data = {
+            "x": X,
+            "y": Y,
+            "z": Z,
+            "classification": C,
+        }
+
+        # HAG — se existir, entra automaticamente no Arrow
+        if "HeightAboveGround" in las.point_format.dimension_names:
+            data["hag"] = np.asarray(
+                las.HeightAboveGround,
+                dtype="float32"
+            )
+
+        table = pa.Table.from_pydict(data)
 
         return table
+
 
     def _normalize_coordinates(self, table):
         """
@@ -670,9 +716,27 @@ class Favela:
         return table.filter(crop_mask_arrow)
     
     def _write_arrow(self, dest: Path):
+        """
+        Escreve o flaz.arrow contendo apenas as colunas
+        necessárias para visualização no FVIZ.
+        """
+
+        # colunas permitidas no Arrow final
+        cols = ["x", "y", "z", "flaz_colormap"]
+
+        # sanity check
+        missing = [c for c in cols if c not in self.table.column_names]
+        if missing:
+            raise ValueError(
+                f"Colunas ausentes na tabela para persistência: {missing}"
+            )
+
+        table_out = self.table.select(cols)
+
         with pa.OSFile(dest.as_posix(), "wb") as f:
-            with ipc.RecordBatchFileWriter(f, self.table.schema) as writer:
-                writer.write_table(self.table)
+            with ipc.RecordBatchFileWriter(f, table_out.schema) as writer:
+                writer.write_table(table_out)
+
 
     def _compute_elevation_stats(self, table: pa.Table):
         z = table["z"].to_numpy(zero_copy_only=False)
@@ -688,7 +752,7 @@ class Favela:
 
     def _build_favela_lidar_base(
         self,
-        out_dir: Path,
+        out_dir: Path | None = None,
         force: bool = False,
     ):
         """
@@ -696,12 +760,12 @@ class Favela:
 
         Produtos:
         - favela.copc.laz  (canônico, com HAG)
-        - mds.tif         (Modelo Digital de Superfície)
-        - mdt.tif         (Modelo Digital do Terreno via TIN)
+        - mds.tif
+        - mdt.tif
         """
 
-        import json
-        import subprocess
+        if self._ano is None:
+            raise ValueError("Ano não definido. Use .periodo(ano) antes.")
 
         out_dir = Path(out_dir)
         out_dir.mkdir(parents=True, exist_ok=True)

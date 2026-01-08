@@ -85,16 +85,10 @@ def calc_more(
 
         f.periodo(ano)
 
-        periodo_dir = (
-            api_path
-            / "favela"
-            / f.nome_normalizado()
-            / "periodos"
-            / str(ano)
-        )
-        periodo_dir.mkdir(parents=True, exist_ok=True)
+        f.set_api_path(api_path)
+        # periodo_dir.mkdir(parents=True, exist_ok=True)
 
-        f._build_favela_lidar_base(periodo_dir, force=force)
+        f._build_favela_lidar_base(f.periodo_dir(), force=force)
         f.calc_flaz(force_recalc=force)
 
         # f.calc_mdt_png(periodo_dir)
