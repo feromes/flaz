@@ -815,6 +815,7 @@ class Favela:
         import numpy as np
         import rasterio
         import json
+        from rasterio.features import rasterize
 
         tif_path = out_dir / "mdt.tif"
         if not tif_path.exists():
@@ -830,10 +831,24 @@ class Favela:
             res = src.res
             crs = src.crs
 
-        # máscara válida
-        valid = ~np.isnan(Z)
+        # -------------------------------
+        # 1) máscara geométrica da favela
+        # -------------------------------
+        geom_mask = rasterize(
+            [(self.geometry, 1)],
+            out_shape=Z.shape,
+            transform=src.transform,
+            fill=0,
+            dtype="uint8"
+        ).astype(bool)
+
+        # -------------------------------
+        # 2) máscara válida final
+        # -------------------------------
+        valid = geom_mask & ~np.isnan(Z)
         if nodata is not None:
             valid &= Z != nodata
+
 
         if valid.sum() == 0:
             return
