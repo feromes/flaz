@@ -91,6 +91,7 @@ def calc_more(
         f._build_favela_lidar_base(f.periodo_dir(), force=force)
         f.calc_flaz(force_recalc=force)
         f.calc_hag(force_recalc=force)
+        f.calc_classification(force_recalc=force)
 
         f.persist(api_path)
 
