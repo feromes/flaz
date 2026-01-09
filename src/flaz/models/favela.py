@@ -149,7 +149,6 @@ class Favela:
 
         return self.favela_dir() / "periodos" / str(ano)
 
-
     def color(self, mode: str = "hex") -> str:
         geom = getattr(self, "geometry", None)
         if geom is None or geom.is_empty:
@@ -276,6 +275,10 @@ class Favela:
                 hag_path = per_dir / "hag_flaz.arrow"
                 self._write_hag_arrow(hag_path)
 
+            # Classification
+            if hasattr(self, "class_table"):
+                class_path = per_dir / "class_flaz.arrow"
+                self._write_class_arrow(class_path)
 
             # (futuro)
             # if hasattr(self, "mds"):
@@ -290,7 +293,6 @@ class Favela:
         icon_path.write_text(svg, encoding="utf-8")
 
         return root.as_posix()
-
 
     def periodo(self, ano: int):
         self._ano = ano
@@ -429,6 +431,30 @@ class Favela:
 
         return self
 
+    def calc_classification(self, force_recalc: bool = False):
+        """
+        Calcula a classificação simplificada (uint8) e armazena em self.class_table
+        """
+        if hasattr(self, "class_table") and not force_recalc:
+            return self
+
+        if not hasattr(self, "table"):
+            raise RuntimeError("Execute calc_flaz() antes de calc_classification().")
+
+        if "classification" not in self.table.column_names:
+            raise ValueError("Coluna 'classification' não encontrada na tabela.")
+
+        import pyarrow as pa
+
+        class_array = self.table["classification"]
+
+        # cria tabela Classification (mesma geometria!)
+        self.class_table = self.table.select(["x", "y", "z"]).append_column(
+            "classification",
+            class_array
+        )
+
+        return self
 
     def quadriculas_laz(self):
 
@@ -622,7 +648,6 @@ class Favela:
 
         return table
 
-
     def _normalize_coordinates(self, table):
         """
         Normaliza X,Y,Z para inteiros usando RESOLUCAO_MINIMA como step.
@@ -790,7 +815,6 @@ class Favela:
         with pa.OSFile(dest.as_posix(), "wb") as f:
             with ipc.RecordBatchFileWriter(f, table_out.schema) as writer:
                 writer.write_table(table_out)
-
 
     def _compute_elevation_stats(self, table: pa.Table):
         z = table["z"].to_numpy(zero_copy_only=False)
@@ -1073,3 +1097,11 @@ class Favela:
         with pa.OSFile(dest.as_posix(), "wb") as f:
             with ipc.RecordBatchFileWriter(f, self.hag_table.schema) as writer:
                 writer.write_table(self.hag_table)
+
+    def _write_class_arrow(self, dest: Path):
+        if not hasattr(self, "class_table"):
+            raise RuntimeError("Execute calc_classification() antes de persistir.")
+
+        with pa.OSFile(dest.as_posix(), "wb") as f:
+            with ipc.RecordBatchFileWriter(f, self.class_table.schema) as writer:
+                writer.write_table(self.class_table)
