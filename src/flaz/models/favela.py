@@ -856,7 +856,77 @@ class Favela:
             return {"copc": copc_path, "mds": mds_path, "mdt": mdt_path}
 
         polygon_wkt = self.geometry.wkt
+        polygon_bb_wkt = self.geometry.envelope.wkt
         srs = "EPSG:31983"  # ajuste se necessário
+
+        pipeline_mdt = {
+            "pipeline": (
+                # ----------------------------------------------------
+                # 1. Readers (todas as quadriculas)
+                # ----------------------------------------------------
+                [
+                    {
+                        "type": "readers.las",
+                        "filename": str(path),
+                    }
+                    for path in self.quadriculas_laz()
+                ]
+                + [
+                    # ------------------------------------------------
+                    # 2. Merge explícito
+                    # ------------------------------------------------
+                    {"type": "filters.merge"},
+
+                    # ------------------------------------------------
+                    # 3. Crop pela geometria
+                    # ------------------------------------------------
+                    {
+                        "type": "filters.crop",
+                        "polygon": polygon_bb_wkt,
+                    },
+
+                    # ------------------------------------------------
+                    # 4. MDS
+                    # ------------------------------------------------
+                    {
+                        "type": "writers.gdal",
+                        "filename": str(mds_path),
+                        "resolution": 0.5,
+                        "output_type": "max",
+                        "nodata": -9999,
+                        "override_srs": srs
+                    },
+
+                    # ------------------------------------------------
+                    # 5. MDT via TIN
+                    # ------------------------------------------------
+                    {
+                        "type": "filters.range",
+                        "limits": "Classification[2:2]",
+                    },
+                    {
+                        "type": "filters.delaunay",
+                    },
+                    {
+                        "type": "filters.faceraster",
+                        "resolution": 0.5,
+                    },
+                    {
+                        "type": "writers.raster",
+                        "filename": str(mdt_path),
+                        "nodata": -9999,
+                    },
+                ]
+            )
+        }
+
+        pipeline_path_mdt = out_dir / "favela_lidar_base_pipeline_mdt.json"
+        pipeline_path_mdt.write_text(json.dumps(pipeline_mdt, indent=2), encoding="utf-8")
+
+        subprocess.run(
+            ["pdal", "pipeline", str(pipeline_path_mdt)],
+            check=True,
+        )
 
         pipeline = {
             "pipeline": (
@@ -897,38 +967,6 @@ class Favela:
                         "filename": str(copc_path),
                         "extra_dims": "all",
                     },
-
-                    # ------------------------------------------------
-                    # 6. MDS
-                    # ------------------------------------------------
-                    {
-                        "type": "writers.gdal",
-                        "filename": str(mds_path),
-                        "resolution": 0.5,
-                        "output_type": "max",
-                        "nodata": -9999,
-                        "override_srs": srs
-                    },
-
-                    # ------------------------------------------------
-                    # 7. MDT via TIN
-                    # ------------------------------------------------
-                    {
-                        "type": "filters.range",
-                        "limits": "Classification[2:2]",
-                    },
-                    {
-                        "type": "filters.delaunay",
-                    },
-                    {
-                        "type": "filters.faceraster",
-                        "resolution": 0.5,
-                    },
-                    {
-                        "type": "writers.raster",
-                        "filename": str(mdt_path),
-                        "nodata": -9999,
-                    },
                 ]
             )
         }
@@ -953,11 +991,15 @@ class Favela:
         para consumo direto no FVIZ.
         """
 
+        TARGET_RES = 2.0  # metros
+
         from PIL import Image
         import numpy as np
         import rasterio
         import json
         from rasterio.features import rasterize
+        from rasterio.warp import reproject, calculate_default_transform
+        from rasterio.enums import Resampling
 
         tif_path = out_dir / "mdt.tif"
         if not tif_path.exists():
@@ -967,30 +1009,33 @@ class Favela:
         meta_path = out_dir / "mdt.json"
 
         with rasterio.open(tif_path) as src:
-            Z = src.read(1).astype("float32")
             nodata = src.nodata
             bounds = src.bounds
-            res = src.res
             crs = src.crs
+            transform_src = src.transform
+            res_src = src.res
 
-        # -------------------------------
-        # 1) máscara geométrica da favela
-        # -------------------------------
-        geom_mask = rasterize(
-            [(self.geometry, 1)],
-            out_shape=Z.shape,
-            transform=src.transform,
-            fill=0,
-            dtype="uint8"
-        ).astype(bool)
+            scale = res_src[0] / TARGET_RES
 
-        # -------------------------------
-        # 2) máscara válida final
-        # -------------------------------
-        valid = geom_mask & ~np.isnan(Z)
+            new_width = int(src.width * scale)
+            new_height = int(src.height * scale)
+
+            Z = src.read(
+                1,
+                out_shape=(new_height, new_width),
+                resampling=Resampling.average
+            ).astype("float32")
+
+            transform = src.transform * src.transform.scale(
+                src.width / new_width,
+                src.height / new_height
+            )
+
+            res = (TARGET_RES, TARGET_RES)
+
+        valid = ~np.isnan(Z)
         if nodata is not None:
             valid &= Z != nodata
-
 
         if valid.sum() == 0:
             return
@@ -1010,7 +1055,7 @@ class Favela:
         meta = {
             "type": "MDT",
             "bounds": [bounds.left, bounds.bottom, bounds.right, bounds.top],
-            "resolution": list(res),
+            "resolution": [TARGET_RES, TARGET_RES],
             "nodata": nodata,
             "stats": {
                 "min": zmin,
