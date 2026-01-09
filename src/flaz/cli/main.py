@@ -117,7 +117,7 @@ def calc_h3(
         readable=True,
         help="GPKG com limites administrativos (default: data/geoportal_subprefeitura_v2.gpkg)",
     ),
-    resolution: int = typer.Option(7, help="Resolução H3"),
+    resolution: int = typer.Option(8, help="Resolução H3"),
     buffer_m: float = typer.Option(1200, help="Buffer em metros"),
     out_dir: Path = typer.Option(
         Path("data/derived/h3"),
