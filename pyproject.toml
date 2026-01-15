@@ -8,15 +8,26 @@ authors = [
   { name = "Fernando Gomes", email = "feromes@gmail.com" }
 ]
 requires-python = ">=3.10"
+
 dependencies = [
-  "pyarrow>=16.0.0",
+  # --- núcleo numérico ---
   "numpy>=1.26",
-  "rich>=13.0",
+  "pyarrow>=16.0.0",
+  "scipy>=1.11",
+
+  # --- geoespacial ---
   "shapely>=2.0.0",
   "pyproj>=3.6",
-  "requests>=2.32",
+  "geopandas>=0.14",
+  "rasterio>=1.3",
+
+  # --- LiDAR ---
   "laspy[lazrs]>=2.5",
-  "typer>=0.20"
+
+  # --- utilidades ---
+  "requests>=2.32",
+  "rich>=13.0",
+  "typer>=0.20",
 ]
 
 [project.optional-dependencies]
@@ -27,6 +38,10 @@ dev = [
   "isort",
   "mypy",
   "ruff",
+]
+
+vielas = [
+  "scikit-image>=0.21",
 ]
 
 [build-system]
@@ -45,5 +60,3 @@ include = ["flaz*"]
 
 [tool.setuptools.package-data]
 "flaz.data" = ["*"]
-
-

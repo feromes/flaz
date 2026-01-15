@@ -20,6 +20,14 @@ import math
 import colorsys
 from flaz.compute.geo_color import geo_color_from_point
 import subprocess
+import numpy as np
+import rasterio
+from rasterio.transform import xy
+from scipy.ndimage import gaussian_filter
+from skimage.graph import route_through_array
+from shapely.geometry import LineString, MultiLineString
+import geopandas as gpd
+
 
 SE = (333060.9, 7392952.6)  # coordenadas do SE (m)
 
@@ -381,9 +389,141 @@ class Favela:
 
         return self
 
-    def calc_vielas(self, w_max=6.0):
         from ..features.vielas import calc_vielas
         return calc_vielas(self)
+
+    def calc_viela_axis(
+        self,
+        cellsize: float = 0.25,
+        max_width: float | None = None,
+        force: bool = False,
+    ):
+        """
+        Extração do eixo das vielas via skeleton do campo de andabilidade
+        (Experimento A — abordagem morfológica)
+        """
+
+        import numpy as np
+        import rasterio
+        from scipy.ndimage import distance_transform_edt
+        from skimage.morphology import skeletonize
+
+        period_dir = self.periodo_dir(self._ano)
+
+        terrain_path = period_dir / "terrain_025.tif"
+        wall_path = period_dir / "wall_candidates_025.tif"
+
+        # -------------------------------------------------
+        # 1. Leitura dos rasters
+        # -------------------------------------------------
+        with rasterio.open(terrain_path) as src:
+            terrain = src.read(1).astype("float32")
+            nodata = src.nodata
+            transform = src.transform
+            crs = src.crs
+
+        with rasterio.open(wall_path) as src:
+            walls = src.read(1).astype("float32")
+
+        valid = np.ones_like(terrain, dtype=bool)
+        if nodata is not None:
+            valid &= terrain != nodata
+
+        # -------------------------------------------------
+        # 2. Campo de andabilidade
+        # -------------------------------------------------
+        # terreno > 0 → alta probabilidade
+        walkable = np.zeros_like(terrain, dtype=bool)
+        walkable[valid & (terrain > 0)] = True
+
+        # paredes ajudam a manter continuidade
+        # mas só onde já existe indício de chão próximo
+        dist_to_ground = distance_transform_edt(~walkable)
+        walkable[(walls > 0) & (dist_to_ground <= 2)] = True
+
+        # -------------------------------------------------
+        # 3. Skeleton
+        # -------------------------------------------------
+        axis = skeletonize(walkable).astype("uint8")
+
+        return {
+            "axis": axis,
+            "walkable": walkable,
+            "transform": transform,
+            "crs": crs,
+        }
+
+    def calc_wall_orientation(
+        wall_raster_path,
+        out_orientation_path,
+        out_coherence_path=None,
+    ):
+        """
+        Calcula campo de orientação dominante das paredes
+        a partir de um raster de candidatos a parede.
+        """
+
+        import numpy as np
+        import rasterio
+        from scipy.ndimage import sobel, gaussian_filter
+
+        with rasterio.open(wall_raster_path) as src:
+            walls = src.read(1).astype("float32")
+            transform = src.transform
+            crs = src.crs
+            profile = src.profile
+
+        # -------------------------------------------------
+        # 1. Suavização leve (remove ruído de densidade)
+        # -------------------------------------------------
+        walls_smooth = gaussian_filter(walls, sigma=1)
+
+        # -------------------------------------------------
+        # 2. Gradientes
+        # -------------------------------------------------
+        gx = sobel(walls_smooth, axis=1)
+        gy = sobel(walls_smooth, axis=0)
+
+        magnitude = np.sqrt(gx**2 + gy**2)
+
+        # -------------------------------------------------
+        # 3. Orientação (ângulo da normal → direção da parede)
+        # -------------------------------------------------
+        # normal = atan2(gy, gx)
+        # parede = normal + 90°
+        orientation = np.arctan2(gy, gx) + np.pi / 2
+
+        # normaliza para [0, π)
+        orientation = np.mod(orientation, np.pi)
+
+        # -------------------------------------------------
+        # 4. Coerência (opcional, mas MUITO útil)
+        # -------------------------------------------------
+        if out_coherence_path is not None:
+            coherence = magnitude / (magnitude.max() + 1e-6)
+        else:
+            coherence = None
+
+        # -------------------------------------------------
+        # 5. Escrita dos rasters
+        # -------------------------------------------------
+        profile.update(
+            dtype="float32",
+            count=1,
+            nodata=-9999,
+        )
+
+        with rasterio.open(out_orientation_path, "w", **profile) as dst:
+            dst.write(orientation.astype("float32"), 1)
+
+        if coherence is not None:
+            with rasterio.open(out_coherence_path, "w", **profile) as dst:
+                dst.write(coherence.astype("float32"), 1)
+
+        return {
+            "orientation": out_orientation_path,
+            "coherence": out_coherence_path,
+        }
 
     def calc_hag(self, force_recalc: bool = False):
         """
@@ -840,6 +980,8 @@ class Favela:
         - favela.copc.laz  (canônico, com HAG)
         - mds.tif
         - mdt.tif
+        - terrain_025.tif
+        - wall_candidates_025.tif
         """
 
         if self._ano is None:
@@ -848,22 +990,30 @@ class Favela:
         out_dir = Path(out_dir)
         out_dir.mkdir(parents=True, exist_ok=True)
 
+        # ----------------------------------------------------
+        # GRID CANÔNICO (alinhamento raster)
+        # ----------------------------------------------------
+        grid_025 = self._compute_aligned_grid(0.25)
+        grid_050 = self._compute_aligned_grid(0.5)
+
         copc_path = out_dir / "favela.copc.laz"
         mds_path = out_dir / "mds.tif"
         mdt_path = out_dir / "mdt.tif"
+        terrain_path = out_dir / "terrain_025.tif"
+        wall_candidates_path = out_dir / "wall_candidates_025.tif"
 
         if copc_path.exists() and mds_path.exists() and mdt_path.exists() and not force:
             return {"copc": copc_path, "mds": mds_path, "mdt": mdt_path}
 
         polygon_wkt = self.geometry.wkt
         polygon_bb_wkt = self.geometry.envelope.wkt
-        srs = "EPSG:31983"  # ajuste se necessário
+        srs = "EPSG:31983"
 
+        # ====================================================
+        # PIPELINE MDT / MDS / TERRAIN
+        # ====================================================
         pipeline_mdt = {
             "pipeline": (
-                # ----------------------------------------------------
-                # 1. Readers (todas as quadriculas)
-                # ----------------------------------------------------
                 [
                     {
                         "type": "readers.las",
@@ -872,49 +1022,65 @@ class Favela:
                     for path in self.quadriculas_laz()
                 ]
                 + [
-                    # ------------------------------------------------
-                    # 2. Merge explícito
-                    # ------------------------------------------------
                     {"type": "filters.merge"},
 
-                    # ------------------------------------------------
-                    # 3. Crop pela geometria
-                    # ------------------------------------------------
                     {
                         "type": "filters.crop",
                         "polygon": polygon_bb_wkt,
                     },
 
-                    # ------------------------------------------------
-                    # 4. MDS
-                    # ------------------------------------------------
+                    # -----------------------------
+                    # MDS (50 cm)
+                    # -----------------------------
                     {
                         "type": "writers.gdal",
                         "filename": str(mds_path),
-                        "resolution": 0.5,
+                        "resolution": grid_050["resolution"],
+                        "origin_x": grid_050["origin_x"],
+                        "origin_y": grid_050["origin_y"],
+                        "width": grid_050["width"],
+                        "height": grid_050["height"],
                         "output_type": "max",
                         "nodata": -9999,
-                        "override_srs": srs
+                        "override_srs": srs,
                     },
 
-                    # ------------------------------------------------
-                    # 5. MDT via TIN
-                    # ------------------------------------------------
+                    # -----------------------------
+                    # MDT via TIN
+                    # -----------------------------
                     {
                         "type": "filters.range",
                         "limits": "Classification[2:2]",
                     },
-                    {
-                        "type": "filters.delaunay",
-                    },
+                    {"type": "filters.delaunay"},
                     {
                         "type": "filters.faceraster",
-                        "resolution": 0.5,
+                        "resolution": grid_050["resolution"],
                     },
                     {
                         "type": "writers.raster",
                         "filename": str(mdt_path),
                         "nodata": -9999,
+                    },
+
+                    # -----------------------------
+                    # TERRAIN (25 cm, alinhado)
+                    # -----------------------------
+                    {
+                        "type": "filters.crop",
+                        "polygon": polygon_wkt,
+                    },
+                    {
+                        "type": "writers.gdal",
+                        "filename": str(terrain_path),
+                        "resolution": grid_025["resolution"],
+                        "origin_x": grid_025["origin_x"],
+                        "origin_y": grid_025["origin_y"],
+                        "width": grid_025["width"],
+                        "height": grid_025["height"],
+                        "output_type": "min",
+                        "nodata": -9999,
+                        "override_srs": srs,
                     },
                 ]
             )
@@ -928,11 +1094,11 @@ class Favela:
             check=True,
         )
 
+        # ====================================================
+        # PIPELINE COPC + WALL CANDIDATES
+        # ====================================================
         pipeline = {
             "pipeline": (
-                # ----------------------------------------------------
-                # 1. Readers (todas as quadriculas)
-                # ----------------------------------------------------
                 [
                     {
                         "type": "readers.las",
@@ -941,31 +1107,61 @@ class Favela:
                     for path in self.quadriculas_laz()
                 ]
                 + [
-                    # ------------------------------------------------
-                    # 2. Merge explícito
-                    # ------------------------------------------------
                     {"type": "filters.merge"},
 
-                    # ------------------------------------------------
-                    # 3. Crop pela geometria
-                    # ------------------------------------------------
                     {
                         "type": "filters.crop",
                         "polygon": polygon_wkt,
                     },
 
-                    # ------------------------------------------------
-                    # 4. HAG
-                    # ------------------------------------------------
+                    # -----------------------------
+                    # HAG
+                    # -----------------------------
                     {"type": "filters.hag_nn"},
 
-                    # ------------------------------------------------
-                    # 5. COPC (artefato canônico)
-                    # ------------------------------------------------
+                    # -----------------------------
+                    # COPC canônico
+                    # -----------------------------
                     {
                         "type": "writers.copc",
                         "filename": str(copc_path),
                         "extra_dims": "all",
+                    },
+
+                    # -----------------------------
+                    # Remove vegetação
+                    # -----------------------------
+                    {
+                        "type": "filters.expression",
+                        "expression": "!(Classification >= 3 && Classification <= 5)",
+                    },
+
+                    # -----------------------------
+                    # Covariance features
+                    # -----------------------------
+                    {
+                        "type": "filters.covariancefeatures",
+                        "knn": 16,
+                    },
+
+                    # -----------------------------
+                    # Wall candidates (verticality)
+                    # -----------------------------
+                    {
+                        "type": "filters.expression",
+                        "expression": "Verticality > 0.66",
+                    },
+                    {
+                        "type": "writers.gdal",
+                        "filename": str(wall_candidates_path),
+                        "resolution": grid_025["resolution"],
+                        "origin_x": grid_025["origin_x"],
+                        "origin_y": grid_025["origin_y"],
+                        "width": grid_025["width"],
+                        "height": grid_025["height"],
+                        "output_type": "count",
+                        "nodata": 0,
+                        "override_srs": srs,
                     },
                 ]
             )
@@ -983,7 +1179,10 @@ class Favela:
             "copc": copc_path,
             "mds": mds_path,
             "mdt": mdt_path,
+            "terrain": terrain_path,
+            "walls": wall_candidates_path,
         }
+
 
     def _persist_mdt_png_from_tif(self, out_dir: Path):
         """
@@ -1150,3 +1349,40 @@ class Favela:
         with pa.OSFile(dest.as_posix(), "wb") as f:
             with ipc.RecordBatchFileWriter(f, self.class_table.schema) as writer:
                 writer.write_table(self.class_table)
+
+    def _compute_aligned_grid(self, resolution: float):
+        """
+        Computa um grid raster alinhado (origem, largura, altura)
+        a partir do envelope da geometria da favela.
+
+        Esse grid DEVE ser reutilizado por todos os writers.gdal
+        que precisem alinhar célula-a-célula.
+        """
+
+        if self.geometry is None or self.geometry.is_empty:
+            raise ValueError("Geometria da favela não disponível.")
+
+        minx, miny, maxx, maxy = self.geometry.bounds
+
+        # 🔹 Quantiza origem para baixo (garante alinhamento global)
+        origin_x = math.floor(minx / resolution) * resolution
+        origin_y = math.floor(miny / resolution) * resolution
+
+        # 🔹 Calcula dimensões do grid
+        width = math.ceil((maxx - origin_x) / resolution)
+        height = math.ceil((maxy - origin_y) / resolution)
+
+        grid = {
+            "resolution": resolution,
+            "origin_x": origin_x,
+            "origin_y": origin_y,
+            "width": int(width),
+            "height": int(height),
+            "crs": "EPSG:31983",
+        }
+
+        # guarda para inspeção / debug / metadata
+        self._aligned_grids = getattr(self, "_aligned_grids", {})
+        self._aligned_grids[resolution] = grid
+
+        return grid
