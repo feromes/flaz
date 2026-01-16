@@ -394,64 +394,225 @@ class Favela:
 
     def calc_viela_axis(
         self,
-        cellsize: float = 0.25,
-        max_width: float | None = None,
+        cellsize: float = 0.50,
+        closing_radius_m: float = 0.5,
+        smooth_sigma_m: float | None = None,
         force: bool = False,
     ):
         """
-        Extração do eixo das vielas via skeleton do campo de andabilidade
-        (Experimento A — abordagem morfológica)
+        Extração do eixo das vielas a partir do raster de terreno,
+        preservando gargalos e conexões mínimas.
+
+        O distance transform é usado apenas como atributo,
+        nunca como filtro de exclusão.
         """
 
         import numpy as np
         import rasterio
-        from scipy.ndimage import distance_transform_edt
-        from skimage.morphology import skeletonize
+        from scipy.ndimage import distance_transform_edt, gaussian_filter
+        from skimage.morphology import closing, disk, skeletonize
 
         period_dir = self.periodo_dir(self._ano)
+        terrain_path = period_dir / "terrain_050.tif"
 
-        terrain_path = period_dir / "terrain_025.tif"
-        wall_path = period_dir / "wall_candidates_025.tif"
-
-        # -------------------------------------------------
-        # 1. Leitura dos rasters
-        # -------------------------------------------------
+        # 1. Leitura
         with rasterio.open(terrain_path) as src:
             terrain = src.read(1).astype("float32")
             nodata = src.nodata
             transform = src.transform
             crs = src.crs
 
-        with rasterio.open(wall_path) as src:
-            walls = src.read(1).astype("float32")
-
+        # 2. Máscara válida
         valid = np.ones_like(terrain, dtype=bool)
         if nodata is not None:
             valid &= terrain != nodata
 
-        # -------------------------------------------------
-        # 2. Campo de andabilidade
-        # -------------------------------------------------
-        # terreno > 0 → alta probabilidade
+        # 3. Campo caminhável
         walkable = np.zeros_like(terrain, dtype=bool)
         walkable[valid & (terrain > 0)] = True
 
-        # paredes ajudam a manter continuidade
-        # mas só onde já existe indício de chão próximo
-        dist_to_ground = distance_transform_edt(~walkable)
-        walkable[(walls > 0) & (dist_to_ground <= 2)] = True
+        # 4. Densificação morfológica
+        closing_radius_px = max(1, int(round(closing_radius_m / cellsize)))
+        walkable_dense = closing(walkable, disk(closing_radius_px))
 
-        # -------------------------------------------------
-        # 3. Skeleton
-        # -------------------------------------------------
-        axis = skeletonize(walkable).astype("uint8")
+        # 5. Suavização opcional
+        if smooth_sigma_m is not None:
+            sigma_px = smooth_sigma_m / cellsize
+            smooth = gaussian_filter(walkable_dense.astype("float32"), sigma=sigma_px)
+            walkable_dense = smooth > 0.5
+
+        # 6. Distance transform (atributo, NÃO filtro)
+        dist = distance_transform_edt(walkable_dense)
+
+        # 7. Skeleton
+        axis = skeletonize(walkable_dense).astype("uint8")
 
         return {
+            "walkable_raw": walkable.astype("uint8"),
+            "walkable_dense": walkable_dense.astype("uint8"),
+            "distance": dist.astype("float32"),
             "axis": axis,
-            "walkable": walkable,
             "transform": transform,
             "crs": crs,
+            "params": {
+                "cellsize_m": cellsize,
+                "closing_radius_m": closing_radius_m,
+                "smooth_sigma_m": smooth_sigma_m,
+            },
         }
+
+    def calc_vielas_vector(
+        self,
+        cellsize: float = 0.5,
+        via_threshold_m: float = 10000,
+        force: bool = False,
+    ):
+        """
+        Converte o skeleton raster das vielas em LineStrings vetoriais
+        garantindo que TODO o skeleton seja vetorizado,
+        incluindo ciclos e vias contínuas.
+        """
+
+        import numpy as np
+        import geopandas as gpd
+        from shapely.geometry import LineString
+        from rasterio.transform import xy
+        import networkx as nx
+
+        # -------------------------------------------------
+        # 1. Skeleton
+        # -------------------------------------------------
+        res = self.calc_viela_axis(cellsize=cellsize, force=force)
+
+        axis = res["axis"].astype(bool)
+        dist = res["distance"]
+        transform = res["transform"]
+        crs = res["crs"]
+
+        H, W = axis.shape
+
+        # -------------------------------------------------
+        # 2. Grafo 8-conectado
+        # -------------------------------------------------
+        G = nx.Graph()
+
+        neighbors = [
+            (-1, -1), (-1, 0), (-1, 1),
+            ( 0, -1),          ( 0, 1),
+            ( 1, -1), ( 1, 0), ( 1, 1),
+        ]
+
+        for y in range(H):
+            for x in range(W):
+                if not axis[y, x]:
+                    continue
+
+                G.add_node((y, x))
+
+                for dy, dx in neighbors:
+                    ny, nx_ = y + dy, x + dx
+                    if 0 <= ny < H and 0 <= nx_ < W:
+                        if axis[ny, nx_]:
+                            G.add_edge((y, x), (ny, nx_))
+
+        degree = dict(G.degree())
+        visited = set()
+        lines = []
+
+        # -------------------------------------------------
+        # 3. Função de caminhada genérica
+        # -------------------------------------------------
+        def walk_path(start):
+            path = [start]
+            visited.add(start)
+
+            prev = None
+            curr = start
+
+            while True:
+                nbrs = [n for n in G.neighbors(curr) if n != prev]
+                if not nbrs:
+                    break
+
+                # segue o primeiro não visitado
+                nxt = None
+                for n in nbrs:
+                    if n not in visited:
+                        nxt = n
+                        break
+
+                if nxt is None:
+                    break
+
+                path.append(nxt)
+                visited.add(nxt)
+                prev, curr = curr, nxt
+
+            return path
+
+        # -------------------------------------------------
+        # 4. Passo A — caminhos iniciando em terminais
+        # -------------------------------------------------
+        terminals = [n for n, d in degree.items() if d != 2]
+
+        for node in terminals:
+            if node in visited:
+                continue
+            path = walk_path(node)
+            if len(path) >= 2:
+                lines.append(path)
+
+        # -------------------------------------------------
+        # 5. Passo B — cobre ciclos e vias contínuas
+        # -------------------------------------------------
+        for node in G.nodes():
+            if node in visited:
+                continue
+            path = walk_path(node)
+            if len(path) >= 2:
+                lines.append(path)
+
+        # -------------------------------------------------
+        # 6. Converte em GeoDataFrame
+        # -------------------------------------------------
+        records = []
+
+        for path in lines:
+            coords = [xy(transform, y, x) for y, x in path]
+
+            line = LineString(coords)
+
+            widths = [2 * dist[y, x] * cellsize for y, x in path]
+
+            mean_w = float(np.mean(widths))
+            min_w = float(np.min(widths))
+            max_w = float(np.max(widths))
+
+            kind = "via" if mean_w >= via_threshold_m else "viela"
+
+            records.append(
+                {
+                    "geometry": line,
+                    "length_m": float(line.length),
+                    "mean_width_m": mean_w,
+                    "min_width_m": min_w,
+                    "max_width_m": max_w,
+                    "n_pixels": len(path),
+                    "kind": kind,
+                }
+            )
+
+        gdf = gpd.GeoDataFrame(records, crs=crs)
+
+        # -------------------------------------------------
+        # 7. Persistência
+        # -------------------------------------------------
+        out = self.periodo_dir(self._ano) / "vielas.gpkg"
+        gdf.to_file(out, layer="vielas", driver="GPKG")
+
+        self.vielas = gdf
+        return gdf
+
 
     def calc_wall_orientation(
         wall_raster_path,
@@ -999,7 +1160,7 @@ class Favela:
         copc_path = out_dir / "favela.copc.laz"
         mds_path = out_dir / "mds.tif"
         mdt_path = out_dir / "mdt.tif"
-        terrain_path = out_dir / "terrain_025.tif"
+        terrain_path = out_dir / "terrain_050.tif"
         wall_candidates_path = out_dir / "wall_candidates_025.tif"
 
         if copc_path.exists() and mds_path.exists() and mdt_path.exists() and not force:
@@ -1063,25 +1224,25 @@ class Favela:
                         "nodata": -9999,
                     },
 
-                    # -----------------------------
-                    # TERRAIN (25 cm, alinhado)
-                    # -----------------------------
-                    {
-                        "type": "filters.crop",
-                        "polygon": polygon_wkt,
-                    },
-                    {
-                        "type": "writers.gdal",
-                        "filename": str(terrain_path),
-                        "resolution": grid_025["resolution"],
-                        "origin_x": grid_025["origin_x"],
-                        "origin_y": grid_025["origin_y"],
-                        "width": grid_025["width"],
-                        "height": grid_025["height"],
-                        "output_type": "min",
-                        "nodata": -9999,
-                        "override_srs": srs,
-                    },
+                    # # -----------------------------
+                    # # TERRAIN (50 cm, alinhado)
+                    # # -----------------------------
+                    # {
+                    #     "type": "filters.crop",
+                    #     "polygon": polygon_wkt,
+                    # },
+                    # {
+                    #     "type": "writers.gdal",
+                    #     "filename": str(terrain_path),
+                    #     "resolution": grid_050["resolution"],
+                    #     "origin_x": grid_050["origin_x"],
+                    #     "origin_y": grid_050["origin_y"],
+                    #     "width": grid_050["width"],
+                    #     "height": grid_050["height"],
+                    #     "output_type": "min",
+                    #     "nodata": -9999,
+                    #     "override_srs": srs,
+                    # },
                 ]
             )
         }
@@ -1137,32 +1298,52 @@ class Favela:
                     },
 
                     # -----------------------------
-                    # Covariance features
-                    # -----------------------------
-                    {
-                        "type": "filters.covariancefeatures",
-                        "knn": 16,
-                    },
-
-                    # -----------------------------
-                    # Wall candidates (verticality)
+                    # TERRAIN (50 cm, alinhado)
                     # -----------------------------
                     {
                         "type": "filters.expression",
-                        "expression": "Verticality > 0.66",
+                        "expression": "HeightAboveGround <= 1.5",
                     },
                     {
                         "type": "writers.gdal",
-                        "filename": str(wall_candidates_path),
-                        "resolution": grid_025["resolution"],
-                        "origin_x": grid_025["origin_x"],
-                        "origin_y": grid_025["origin_y"],
-                        "width": grid_025["width"],
-                        "height": grid_025["height"],
-                        "output_type": "count",
-                        "nodata": 0,
+                        "filename": str(terrain_path),
+                        "resolution": grid_050["resolution"],
+                        "origin_x": grid_050["origin_x"],
+                        "origin_y": grid_050["origin_y"],
+                        "width": grid_050["width"],
+                        "height": grid_050["height"],
+                        "output_type": "min",
+                        "nodata": -9999,
                         "override_srs": srs,
                     },
+
+                    # # -----------------------------
+                    # # Covariance features
+                    # # -----------------------------
+                    # {
+                    #     "type": "filters.covariancefeatures",
+                    #     "knn": 16,
+                    # },
+
+                    # # -----------------------------
+                    # # Wall candidates (verticality)
+                    # # -----------------------------
+                    # {
+                    #     "type": "filters.expression",
+                    #     "expression": "Verticality > 0.66",
+                    # },
+                    # {
+                    #     "type": "writers.gdal",
+                    #     "filename": str(wall_candidates_path),
+                    #     "resolution": grid_025["resolution"],
+                    #     "origin_x": grid_025["origin_x"],
+                    #     "origin_y": grid_025["origin_y"],
+                    #     "width": grid_025["width"],
+                    #     "height": grid_025["height"],
+                    #     "output_type": "count",
+                    #     "nodata": 0,
+                    #     "override_srs": srs,
+                    # },
                 ]
             )
         }
@@ -1182,7 +1363,6 @@ class Favela:
             "terrain": terrain_path,
             "walls": wall_candidates_path,
         }
-
 
     def _persist_mdt_png_from_tif(self, out_dir: Path):
         """
