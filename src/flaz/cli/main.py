@@ -63,15 +63,29 @@ def calc_hag(
 
 
 # ------------------------------------------------------------------------------
-# HAG — múltiplas favelas
+# PROCESSAMENTO COMPLETO — múltiplas favelas (FLAZ → FVIZ)
 # ------------------------------------------------------------------------------
 
 @app.command()
 def calc_more(
-    ano: int = typer.Option(..., "--ano", "-a"),
-    api: str = typer.Option("./flaz_api", "--api"),
-    force: bool = typer.Option(False, "--force"),
+    ano: int = typer.Option(..., "--ano", "-a", help="Ano do processamento."),
+    api: str = typer.Option(
+        "./flaz_api",
+        "--api",
+        help="Diretório raiz onde a API FLAZ será gravada."
+    ),
+    force: bool = typer.Option(False, "--force", help="Ignora cache."),
 ):
+    """
+    Processa todas as favelas:
+    - base LiDAR
+    - flaz
+    - HAG
+    - classification
+    - via / viela / vazio
+    - persistência completa para FVIZ
+    """
+
     favelas = Favelas()
     api_path = resolve_api_path(api)
 
@@ -81,28 +95,64 @@ def calc_more(
     cards = []
 
     for f in favelas:
-        typer.echo(f"→ {f} ({ano})")
+        typer.echo(f"\n→ {f} ({ano})")
 
+        # -----------------------------
+        # Configuração básica
+        # -----------------------------
+        f.set_api_path(api_path)
         f.periodo(ano)
 
-        f.set_api_path(api_path)
-        # periodo_dir.mkdir(parents=True, exist_ok=True)
+        # -----------------------------
+        # Base LiDAR (COPC, MDT, MDS, terrain)
+        # -----------------------------
+        typer.echo("  • Base LiDAR")
+        f._build_favela_lidar_base(
+            out_dir=f.periodo_dir(),
+            force=force
+        )
 
-        f._build_favela_lidar_base(f.periodo_dir(), force=force)
+        # -----------------------------
+        # Núcleo FLAZ
+        # -----------------------------
+        typer.echo("  • calc_flaz")
         f.calc_flaz(force_recalc=force)
+
+        typer.echo("  • calc_hag")
         f.calc_hag(force_recalc=force)
+
+        typer.echo("  • calc_classification")
         f.calc_classification(force_recalc=force)
 
+        # -----------------------------
+        # NOVO — Via / Viela / Vazio
+        # -----------------------------
+        typer.echo("  • calc_via_viela_vazio")
+        f.calc_via_viela_vazio(force_recalc=force)
+
+        # -----------------------------
+        # Persistência API FVIZ
+        # -----------------------------
+        typer.echo("  • persist")
         f.persist(api_path)
 
+        # -----------------------------
+        # Card
+        # -----------------------------
         cards.append(f.to_card())
 
-    (api_path / "favelas.json").write_text(
+    # ------------------------------------------------------------------
+    # Atualiza catálogo de favelas
+    # ------------------------------------------------------------------
+    catalog_path = api_path / "favelas.json"
+
+    catalog_path.write_text(
         json.dumps(cards, ensure_ascii=False, indent=2),
         encoding="utf-8"
     )
 
-    typer.echo("✔ Concluído processamento de todas as favelas!")
+    typer.echo("\n✔ Concluído processamento de todas as favelas!")
+
 
 
 # ------------------------------------------------------------------------------

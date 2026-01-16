@@ -288,6 +288,11 @@ class Favela:
                 class_path = per_dir / "class_flaz.arrow"
                 self._write_class_arrow(class_path)
 
+            # Via / Viela / Vazio
+            if hasattr(self, "vvv_table"):
+                vvv_path = per_dir / "via_viela_vazio_flaz.arrow"
+                self._write_vvv_arrow(vvv_path)
+
             # (futuro)
             # if hasattr(self, "mds"):
             #     self._persist_mds(per_dir)
@@ -613,7 +618,6 @@ class Favela:
         self.vielas = gdf
         return gdf
 
-
     def calc_wall_orientation(
         wall_raster_path,
         out_orientation_path,
@@ -754,6 +758,90 @@ class Favela:
             "classification",
             class_array
         )
+
+        return self
+
+    def calc_via_viela_vazio(self, force_recalc: bool = False):
+        """
+        Marca pontos pertencentes a vias, vielas ou vazios.
+
+        Definição operacional (FLAZ/FVIZ):
+        - NÃO vegetação
+        - NÃO edificação
+        - HeightAboveGround <= 1.5 m
+
+        Gera uma tabela derivada:
+            self.vvv_table
+
+        com coluna:
+            via_viela_vazio (uint8)
+        """
+
+        if hasattr(self, "vvv_table") and not force_recalc:
+            return self
+
+        if not hasattr(self, "table"):
+            raise RuntimeError("Execute calc_flaz() antes de calc_via_viela_vazio().")
+
+        import numpy as np
+        import pyarrow as pa
+
+        table = self.table
+
+        # ------------------------------
+        # Sanity checks
+        # ------------------------------
+        if "classification" not in table.column_names:
+            raise ValueError("Coluna 'classification' não encontrada.")
+
+        if "hag" not in table.column_names:
+            raise ValueError("Coluna 'hag' (HeightAboveGround) não encontrada.")
+
+        classification = table["classification"].to_numpy(zero_copy_only=False)
+        hag = table["hag"].to_numpy(zero_copy_only=False)
+
+        # ------------------------------
+        # Máscaras semânticas
+        # ------------------------------
+
+        # Vegetação (ASPRS: 3,4,5)
+        is_vegetation = (classification >= 3) & (classification <= 5)
+
+        # Edificação (ASPRS: 6)
+        is_building = classification == 6
+
+        # Altura válida (até 1.5 m)
+        is_low = hag <= 1.5
+
+        # ------------------------------
+        # Regra final
+        # ------------------------------
+        via_viela_vazio = (
+            (~is_vegetation) &
+            (~is_building) &
+            is_low
+        )
+
+        # ------------------------------
+        # Converte para uint8 (FLAZ-like)
+        # ------------------------------
+        vvv_uint8 = via_viela_vazio.astype("uint8")
+
+        # ------------------------------
+        # Tabela derivada (mesma geometria)
+        # ------------------------------
+        self.vvv_table = table.select(["x", "y", "z"]).append_column(
+            "via_viela_vazio",
+            pa.array(vvv_uint8, type=pa.uint8())
+        )
+
+        # stats simples (opcional, mas útil)
+        self.vvv_stats = {
+            "total_points": int(len(vvv_uint8)),
+            "vvv_points": int(vvv_uint8.sum()),
+            "ratio": float(vvv_uint8.sum() / max(len(vvv_uint8), 1)),
+            "hag_threshold_m": 1.5,
+        }
 
         return self
 
@@ -1529,6 +1617,21 @@ class Favela:
         with pa.OSFile(dest.as_posix(), "wb") as f:
             with ipc.RecordBatchFileWriter(f, self.class_table.schema) as writer:
                 writer.write_table(self.class_table)
+
+    def _write_vvv_arrow(self, dest: Path):
+        """
+        Escreve o artefato via_viela_vazio_flaz.arrow
+        """
+
+        if not hasattr(self, "vvv_table"):
+            raise RuntimeError("Execute calc_via_viela_vazio() antes de persistir.")
+
+        import pyarrow.ipc as ipc
+        import pyarrow as pa
+
+        with pa.OSFile(dest.as_posix(), "wb") as f:
+            with ipc.RecordBatchFileWriter(f, self.vvv_table.schema) as writer:
+                writer.write_table(self.vvv_table)
 
     def _compute_aligned_grid(self, resolution: float):
         """
