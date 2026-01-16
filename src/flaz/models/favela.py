@@ -736,10 +736,40 @@ class Favela:
 
         return self
 
+    # def calc_classification(self, force_recalc: bool = False):
+    #     """
+    #     Calcula a classificação simplificada (uint8) e armazena em self.class_table
+    #     """
+    #     if hasattr(self, "class_table") and not force_recalc:
+    #         return self
+
+    #     if not hasattr(self, "table"):
+    #         raise RuntimeError("Execute calc_flaz() antes de calc_classification().")
+
+    #     if "classification" not in self.table.column_names:
+    #         raise ValueError("Coluna 'classification' não encontrada na tabela.")
+
+    #     import pyarrow as pa
+
+    #     class_array = self.table["classification"]
+
+    #     # cria tabela Classification (mesma geometria!)
+    #     self.class_table = self.table.select(["x", "y", "z"]).append_column(
+    #         "classification",
+    #         class_array
+    #     )
+
+    #     return self
+
     def calc_classification(self, force_recalc: bool = False):
         """
-        Calcula a classificação simplificada (uint8) e armazena em self.class_table
+        Calcula a classificação simplificada (uint8) e armazena em self.class_table.
+
+        ⚠️ Versão experimental:
+        Este artefato NÃO carrega geometria (x,y,z),
+        apenas a coluna escalar de classificação.
         """
+
         if hasattr(self, "class_table") and not force_recalc:
             return self
 
@@ -753,13 +783,15 @@ class Favela:
 
         class_array = self.table["classification"]
 
-        # cria tabela Classification (mesma geometria!)
-        self.class_table = self.table.select(["x", "y", "z"]).append_column(
-            "classification",
-            class_array
+        # 🔹 tabela escalar pura (mesmo número de linhas!)
+        self.class_table = pa.Table.from_pydict(
+            {
+                "classification": class_array
+            }
         )
 
         return self
+
 
     def calc_via_viela_vazio(self, force_recalc: bool = False):
         """
