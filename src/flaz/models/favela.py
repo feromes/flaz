@@ -690,21 +690,71 @@ class Favela:
             "coherence": out_coherence_path,
         }
 
+    # def calc_hag(self, force_recalc: bool = False):
+    #     """
+    #     Calcula o HAG normalizado (uint8) e armazena em self.hag_table
+    #     """
+    #     if hasattr(self, "hag_table") and not force_recalc:
+    #         return self
+
+    #     if not hasattr(self, "table"):
+    #         raise RuntimeError("Execute calc_flaz() antes de calc_hag().")
+
+    #     import numpy as np
+    #     import pyarrow as pa
+
+    #     if "hag" not in self.table.column_names:
+    #         raise ValueError("Coluna 'hag' não encontrada na tabela.")
+
+    #     hag = self.table["hag"].to_numpy(zero_copy_only=False)
+
+    #     valid = ~np.isnan(hag)
+    #     if valid.sum() == 0:
+    #         raise ValueError("Todos os valores de HAG são NaN.")
+
+    #     hmin = float(hag[valid].min())
+    #     hmax = float(hag[valid].max())
+
+    #     if hmax == hmin:
+    #         cmap = np.zeros(len(hag), dtype="uint8")
+    #     else:
+    #         cmap = np.zeros(len(hag), dtype="uint8")
+    #         cmap[valid] = ((hag[valid] - hmin) / (hmax - hmin) * 255).astype("uint8")
+
+    #     # guarda stats físicos
+    #     self.hag_stats = {
+    #         "min": hmin,
+    #         "max": hmax,
+    #         "unit": "m",
+    #     }
+
+    #     # cria tabela HAG (mesma geometria!)
+    #     self.hag_table = self.table.select(["x", "y", "z"]).append_column(
+    #         "hag_colormap",
+    #         pa.array(cmap, type=pa.uint8())
+    #     )
+
+    #     return self
+
     def calc_hag(self, force_recalc: bool = False):
         """
-        Calcula o HAG normalizado (uint8) e armazena em self.hag_table
+        Calcula o HAG normalizado (uint8) e armazena em self.hag_table.
+
+        ⚠️ Versão escalar:
+        NÃO inclui x, y, z.
         """
+
         if hasattr(self, "hag_table") and not force_recalc:
             return self
 
         if not hasattr(self, "table"):
             raise RuntimeError("Execute calc_flaz() antes de calc_hag().")
 
-        import numpy as np
-        import pyarrow as pa
-
         if "hag" not in self.table.column_names:
             raise ValueError("Coluna 'hag' não encontrada na tabela.")
+
+        import numpy as np
+        import pyarrow as pa
 
         hag = self.table["hag"].to_numpy(zero_copy_only=False)
 
@@ -715,23 +765,22 @@ class Favela:
         hmin = float(hag[valid].min())
         hmax = float(hag[valid].max())
 
-        if hmax == hmin:
-            cmap = np.zeros(len(hag), dtype="uint8")
-        else:
-            cmap = np.zeros(len(hag), dtype="uint8")
+        cmap = np.zeros(len(hag), dtype="uint8")
+        if hmax > hmin:
             cmap[valid] = ((hag[valid] - hmin) / (hmax - hmin) * 255).astype("uint8")
 
-        # guarda stats físicos
+        # stats físicos (para o card)
         self.hag_stats = {
             "min": hmin,
             "max": hmax,
             "unit": "m",
         }
 
-        # cria tabela HAG (mesma geometria!)
-        self.hag_table = self.table.select(["x", "y", "z"]).append_column(
-            "hag_colormap",
-            pa.array(cmap, type=pa.uint8())
+        # 🔹 tabela escalar
+        self.hag_table = pa.Table.from_pydict(
+            {
+                "hag_colormap": pa.array(cmap, type=pa.uint8())
+            }
         )
 
         return self
@@ -792,21 +841,97 @@ class Favela:
 
         return self
 
+    # def calc_via_viela_vazio(self, force_recalc: bool = False):
+    #     """
+    #     Marca pontos pertencentes a vias, vielas ou vazios.
+
+    #     Definição operacional (FLAZ/FVIZ):
+    #     - NÃO vegetação
+    #     - NÃO edificação
+    #     - HeightAboveGround <= 1.5 m
+
+    #     Gera uma tabela derivada:
+    #         self.vvv_table
+
+    #     com coluna:
+    #         via_viela_vazio (uint8)
+    #     """
+
+    #     if hasattr(self, "vvv_table") and not force_recalc:
+    #         return self
+
+    #     if not hasattr(self, "table"):
+    #         raise RuntimeError("Execute calc_flaz() antes de calc_via_viela_vazio().")
+
+    #     import numpy as np
+    #     import pyarrow as pa
+
+    #     table = self.table
+
+    #     # ------------------------------
+    #     # Sanity checks
+    #     # ------------------------------
+    #     if "classification" not in table.column_names:
+    #         raise ValueError("Coluna 'classification' não encontrada.")
+
+    #     if "hag" not in table.column_names:
+    #         raise ValueError("Coluna 'hag' (HeightAboveGround) não encontrada.")
+
+    #     classification = table["classification"].to_numpy(zero_copy_only=False)
+    #     hag = table["hag"].to_numpy(zero_copy_only=False)
+
+    #     # ------------------------------
+    #     # Máscaras semânticas
+    #     # ------------------------------
+
+    #     # Vegetação (ASPRS: 3,4,5)
+    #     is_vegetation = (classification >= 3) & (classification <= 5)
+
+    #     # Edificação (ASPRS: 6)
+    #     is_building = classification == 6
+
+    #     # Altura válida (até 1.5 m)
+    #     is_low = hag <= 1.5
+
+    #     # ------------------------------
+    #     # Regra final
+    #     # ------------------------------
+    #     via_viela_vazio = (
+    #         (~is_vegetation) &
+    #         (~is_building) &
+    #         is_low
+    #     )
+
+    #     # ------------------------------
+    #     # Converte para uint8 (FLAZ-like)
+    #     # ------------------------------
+    #     vvv_uint8 = via_viela_vazio.astype("uint8")
+
+    #     # ------------------------------
+    #     # Tabela derivada (mesma geometria)
+    #     # ------------------------------
+    #     self.vvv_table = table.select(["x", "y", "z"]).append_column(
+    #         "via_viela_vazio",
+    #         pa.array(vvv_uint8, type=pa.uint8())
+    #     )
+
+    #     # stats simples (opcional, mas útil)
+    #     self.vvv_stats = {
+    #         "total_points": int(len(vvv_uint8)),
+    #         "vvv_points": int(vvv_uint8.sum()),
+    #         "ratio": float(vvv_uint8.sum() / max(len(vvv_uint8), 1)),
+    #         "hag_threshold_m": 1.5,
+    #     }
+
+    #     return self
 
     def calc_via_viela_vazio(self, force_recalc: bool = False):
         """
         Marca pontos pertencentes a vias, vielas ou vazios.
 
-        Definição operacional (FLAZ/FVIZ):
-        - NÃO vegetação
-        - NÃO edificação
-        - HeightAboveGround <= 1.5 m
-
-        Gera uma tabela derivada:
-            self.vvv_table
-
-        com coluna:
-            via_viela_vazio (uint8)
+        Versão escalar:
+        - 1 = via / viela / vazio
+        - 0 = demais
         """
 
         if hasattr(self, "vvv_table") and not force_recalc:
@@ -820,54 +945,35 @@ class Favela:
 
         table = self.table
 
-        # ------------------------------
-        # Sanity checks
-        # ------------------------------
         if "classification" not in table.column_names:
             raise ValueError("Coluna 'classification' não encontrada.")
 
         if "hag" not in table.column_names:
-            raise ValueError("Coluna 'hag' (HeightAboveGround) não encontrada.")
+            raise ValueError("Coluna 'hag' não encontrada.")
 
         classification = table["classification"].to_numpy(zero_copy_only=False)
         hag = table["hag"].to_numpy(zero_copy_only=False)
 
-        # ------------------------------
-        # Máscaras semânticas
-        # ------------------------------
-
-        # Vegetação (ASPRS: 3,4,5)
+        # máscaras semânticas
         is_vegetation = (classification >= 3) & (classification <= 5)
-
-        # Edificação (ASPRS: 6)
         is_building = classification == 6
-
-        # Altura válida (até 1.5 m)
         is_low = hag <= 1.5
 
-        # ------------------------------
-        # Regra final
-        # ------------------------------
         via_viela_vazio = (
             (~is_vegetation) &
             (~is_building) &
             is_low
         )
 
-        # ------------------------------
-        # Converte para uint8 (FLAZ-like)
-        # ------------------------------
         vvv_uint8 = via_viela_vazio.astype("uint8")
 
-        # ------------------------------
-        # Tabela derivada (mesma geometria)
-        # ------------------------------
-        self.vvv_table = table.select(["x", "y", "z"]).append_column(
-            "via_viela_vazio",
-            pa.array(vvv_uint8, type=pa.uint8())
+        # 🔹 tabela escalar
+        self.vvv_table = pa.Table.from_pydict(
+            {
+                "via_viela_vazio": pa.array(vvv_uint8, type=pa.uint8())
+            }
         )
 
-        # stats simples (opcional, mas útil)
         self.vvv_stats = {
             "total_points": int(len(vvv_uint8)),
             "vvv_points": int(vvv_uint8.sum()),
