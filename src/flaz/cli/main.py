@@ -145,6 +145,7 @@ def calc_more(
     # Atualiza catálogo de favelas
     # ------------------------------------------------------------------
     catalog_path = api_path / "favelas.json"
+    catalog_path = api_path / f"favelas_{ano}.json"
 
     catalog_path.write_text(
         json.dumps(cards, ensure_ascii=False, indent=2),
