@@ -352,7 +352,9 @@ class Favela:
             "bbox": bbox,
             "centroid": centroid,
 
+            # 🔹 atributos escalares
             "hag": getattr(self, "hag_stats", None),
+            "delta": getattr(self, "delta_stats", None),   # ✅ AQUI
 
             "dist_se_m": dist_se_m,
             "area_m2": self.geometry.area,
@@ -363,12 +365,12 @@ class Favela:
 
             "data_geracao": datetime.now().strftime("%Y-%m-%d"),
             "bb_normalizado": bb,
-            "resolucao": 12.5,             # constante atual do FLAZ
-            "offset": [0, 0, 0],           # por enquanto fixo
+            "resolucao": 12.5,
+            "offset": [0, 0, 0],
             "src": "EPSG:31983",
             "point_count": self.table.num_rows,
             "elevation": getattr(self, "elevation", None),
-            "versao_flaz": flaz.__version__
+            "versao_flaz": flaz.__version__,
         }
 
     def calc_mds(self, resolution: float = 0.5, force_recalc: bool = False):
