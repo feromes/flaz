@@ -293,6 +293,13 @@ class Favela:
                 vvv_path = per_dir / "via_viela_vazio_flaz.arrow"
                 self._write_vvv_arrow(vvv_path)
 
+            # Delta
+            if hasattr(self, "delta_table"):
+                delta_path = per_dir / "delta_flaz.arrow"
+                with pa.OSFile(delta_path.as_posix(), "wb") as f:
+                    with ipc.RecordBatchFileWriter(f, self.delta_table.schema) as writer:
+                        writer.write_table(self.delta_table)
+
             # (futuro)
             # if hasattr(self, "mds"):
             #     self._persist_mds(per_dir)
@@ -393,9 +400,6 @@ class Favela:
             self._register_layer("mds")
 
         return self
-
-        from ..features.vielas import calc_vielas
-        return calc_vielas(self)
 
     def calc_viela_axis(
         self,
@@ -824,6 +828,169 @@ class Favela:
             "vvv_points": int(vvv_uint8.sum()),
             "ratio": float(vvv_uint8.sum() / max(len(vvv_uint8), 1)),
             "hag_threshold_m": 1.5,
+        }
+
+        return self
+
+    def calc_delta(self, force_recalc: bool = False):
+        """
+        Calcula o Delta vertical entre o período atual e o período anterior,
+        comparando os pontos do ano atual com o MDS (50 cm) do ano anterior.
+
+        O resultado é um artefato escalar:
+            - delta_flaz.arrow
+            - coluna: delta_colormap (uint8)
+
+        O Delta pertence SEMPRE ao período atual.
+        """
+
+        # -------------------------------------------------
+        # 0. Cache
+        # -------------------------------------------------
+        if hasattr(self, "delta_table") and not force_recalc:
+            return self
+
+        if self._ano is None:
+            raise ValueError("Ano não definido. Use .periodo(ano) antes de calc_delta().")
+
+        # -------------------------------------------------
+        # 1. Determinar período anterior
+        # -------------------------------------------------
+        ano_atual = self._ano
+
+        base_dir = self.favela_dir() / "periodos"
+        if not base_dir.exists():
+            raise RuntimeError("Nenhum período anterior encontrado para Delta.")
+
+        anos_disponiveis = sorted(
+            int(p.name) for p in base_dir.iterdir() if p.is_dir() and p.name.isdigit()
+        )
+
+        anos_passados = [a for a in anos_disponiveis if a < ano_atual]
+
+        if not anos_passados:
+            raise RuntimeError(
+                f"Delta exige período anterior. Nenhum ano < {ano_atual} encontrado."
+            )
+
+        ano_anterior = anos_passados[-1]
+
+        # -------------------------------------------------
+        # 2. Insumos obrigatórios
+        # -------------------------------------------------
+        if not hasattr(self, "table"):
+            raise RuntimeError("Execute calc_flaz() antes de calc_delta().")
+
+        # caminho do MDS anterior
+        mds_path = self.periodo_dir(ano_anterior) / "mds.tif"
+
+        if not mds_path.exists():
+            raise FileNotFoundError(
+                f"MDS do período anterior não encontrado: {mds_path}"
+            )
+
+        # -------------------------------------------------
+        # 3. Abrir MDS do período anterior
+        # -------------------------------------------------
+        import rasterio
+        import numpy as np
+        import pyarrow as pa
+        from rasterio.transform import rowcol
+
+        with rasterio.open(mds_path) as src:
+            Z_mds = src.read(1).astype("float32")
+            transform = src.transform
+            nodata = src.nodata
+            height, width = Z_mds.shape
+
+        # -------------------------------------------------
+        # 4. Coordenadas reais dos pontos atuais
+        # -------------------------------------------------
+        # ⚠️ Usa offsets salvos na normalização
+        meta = getattr(self, "meta", {})
+        offsets = meta.get("offsets")
+
+        if offsets is None:
+            raise RuntimeError(
+                "Offsets não encontrados. Delta exige calc_flaz() com normalização."
+            )
+
+        q = meta.get("quantization", None)
+        if q is None:
+            raise RuntimeError("Quantização não encontrada no meta.")
+
+        # coordenadas normalizadas (int)
+        xs = self.table["x"].to_numpy(zero_copy_only=False)
+        ys = self.table["y"].to_numpy(zero_copy_only=False)
+        zs = self.table["z"].to_numpy(zero_copy_only=False)
+
+        # reconstrói coordenadas reais (metros)
+        x_real = xs * q + offsets["xmin"]
+        y_real = ys * q + offsets["ymin"]
+        z_real = zs * q + offsets["zmin"]
+
+        # -------------------------------------------------
+        # 5. Lookup raster (ponto -> MDS)
+        # -------------------------------------------------
+        delta_z = np.full(len(z_real), np.nan, dtype="float32")
+
+        rows, cols = rowcol(transform, x_real, y_real)
+
+        valid = (
+            (rows >= 0) & (rows < height) &
+            (cols >= 0) & (cols < width)
+        )
+
+        rows_v = rows[valid]
+        cols_v = cols[valid]
+
+        z_ref = Z_mds[rows_v, cols_v]
+
+        if nodata is not None:
+            ok = z_ref != nodata
+            idx = np.where(valid)[0][ok]
+            delta_z[idx] = z_real[idx] - z_ref[ok]
+        else:
+            idx = np.where(valid)[0]
+            delta_z[idx] = z_real[idx] - z_ref
+
+        # -------------------------------------------------
+        # 6. Normalização para colormap (uint8)
+        # -------------------------------------------------
+        valid_delta = ~np.isnan(delta_z)
+
+        if valid_delta.sum() == 0:
+            raise RuntimeError("Delta inválido: nenhum valor válido calculado.")
+
+        dmin = float(np.nanmin(delta_z))
+        dmax = float(np.nanmax(delta_z))
+
+        delta_colormap = np.zeros(len(delta_z), dtype="uint8")
+
+        if dmax > dmin:
+            delta_colormap[valid_delta] = (
+                (delta_z[valid_delta] - dmin) / (dmax - dmin) * 255
+            ).astype("uint8")
+
+        # -------------------------------------------------
+        # 7. Tabela Arrow escalar
+        # -------------------------------------------------
+        self.delta_table = pa.Table.from_pydict(
+            {
+                "delta_colormap": pa.array(delta_colormap, type=pa.uint8())
+            }
+        )
+
+        # -------------------------------------------------
+        # 8. Estatísticas (para card / debug)
+        # -------------------------------------------------
+        self.delta_stats = {
+            "ref": f"{ano_anterior}-{ano_atual}",
+            "min": dmin,
+            "max": dmax,
+            "unit": "m",
+            "source": "mds",
+            "resolution_m": 0.5,
         }
 
         return self

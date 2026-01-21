@@ -131,6 +131,12 @@ def calc_more(
         f.calc_via_viela_vazio(force_recalc=force)
 
         # -----------------------------
+        # NOVO — Delta temporal
+        # -----------------------------
+        typer.echo("  • calc_delta")
+        f.calc_delta(force_recalc=force)
+
+        # -----------------------------
         # Persistência API FVIZ
         # -----------------------------
         typer.echo("  • persist")
