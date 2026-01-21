@@ -834,7 +834,7 @@ class Favela:
 
         return self
 
-    def calc_delta(self, force_recalc: bool = False):
+    def calc_delta(self, force_recalc: bool = False, deadzone_m: float = 0.60):
         """
         Calcula o Delta vertical entre o período atual e o período anterior,
         comparando os pontos do ano atual com o MDS (50 cm) do ano anterior.
@@ -957,7 +957,7 @@ class Favela:
             delta_z[idx] = z_real[idx] - z_ref
 
         # -------------------------------------------------
-        # 6. Normalização para colormap (uint8)
+        # 6. Normalização divergente com zona morta
         # -------------------------------------------------
         valid_delta = ~np.isnan(delta_z)
 
@@ -967,12 +967,37 @@ class Favela:
         dmin = float(np.nanmin(delta_z))
         dmax = float(np.nanmax(delta_z))
 
-        delta_colormap = np.zeros(len(delta_z), dtype="uint8")
+        T = deadzone_m  # zona neutra (ex: 1.0 m)
 
-        if dmax > dmin:
-            delta_colormap[valid_delta] = (
-                (delta_z[valid_delta] - dmin) / (dmax - dmin) * 255
-            ).astype("uint8")
+        # separa negativos e positivos
+        neg = delta_z < -T
+        pos = delta_z > T
+        neu = (~neg) & (~pos)
+
+        delta_colormap = np.full(len(delta_z), 127, dtype="uint8")  # cinza neutro
+
+        # --- negativos (127 → 0)
+        if np.any(neg):
+            neg_vals = delta_z[neg]
+            nmin = float(neg_vals.min())   # mais negativo
+            nmax = -T
+
+            if nmin < nmax:
+                delta_colormap[neg] = (
+                    127 * (neg_vals - nmax) / (nmin - nmax)
+                ).astype("uint8")
+
+        # --- positivos (127 → 255)
+        if np.any(pos):
+            pos_vals = delta_z[pos]
+            pmin = T
+            pmax = float(pos_vals.max())
+
+            if pmax > pmin:
+                delta_colormap[pos] = (
+                    127 + 128 * (pos_vals - pmin) / (pmax - pmin)
+                ).astype("uint8")
+
 
         # -------------------------------------------------
         # 7. Tabela Arrow escalar
@@ -990,9 +1015,10 @@ class Favela:
             "ref": f"{ano_anterior}-{ano_atual}",
             "min": dmin,
             "max": dmax,
+            "deadzone_m": deadzone_m,
             "unit": "m",
-            "source": "mds",
-            "resolution_m": 0.5,
+            "mode": "divergent",
+            "zero_ref": 0.0,
         }
 
         return self
