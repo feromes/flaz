@@ -836,12 +836,17 @@ class Favela:
 
     def calc_delta(self, force_recalc: bool = False, deadzone_m: float = 0.60):
         """
-        Calcula o Delta vertical entre o período atual e o período anterior,
-        comparando os pontos do ano atual com o MDS (50 cm) do ano anterior.
+        Delta morfológico (versão passa-alta local).
 
-        O resultado é um artefato escalar:
+        Estratégia:
+        - aplica passa-alta 3x3 no MDS anterior
+        - calcula ΔHP entre MDS filtrados
+        - anota Δz do ponto apenas se o sinal for compatível
+        - caso contrário, zona morta
+
+        Artefato:
             - delta_flaz.arrow
-            - coluna: delta_colormap (uint8)
+            - coluna: delta_colormap (uint8, divergente)
 
         O Delta pertence SEMPRE ao período atual.
         """
@@ -859,148 +864,157 @@ class Favela:
         # 1. Determinar período anterior
         # -------------------------------------------------
         ano_atual = self._ano
-
         base_dir = self.favela_dir() / "periodos"
-        if not base_dir.exists():
-            raise RuntimeError("Nenhum período anterior encontrado para Delta.")
 
         anos_disponiveis = sorted(
-            int(p.name) for p in base_dir.iterdir() if p.is_dir() and p.name.isdigit()
+            int(p.name) for p in base_dir.iterdir()
+            if p.is_dir() and p.name.isdigit()
         )
 
         anos_passados = [a for a in anos_disponiveis if a < ano_atual]
-
         if not anos_passados:
-            raise RuntimeError(
-                f"Delta exige período anterior. Nenhum ano < {ano_atual} encontrado."
-            )
+            raise RuntimeError("Delta exige período anterior.")
 
         ano_anterior = anos_passados[-1]
 
         # -------------------------------------------------
-        # 2. Insumos obrigatórios
+        # 2. Insumos
         # -------------------------------------------------
         if not hasattr(self, "table"):
             raise RuntimeError("Execute calc_flaz() antes de calc_delta().")
 
-        # caminho do MDS anterior
         mds_path = self.periodo_dir(ano_anterior) / "mds.tif"
-
         if not mds_path.exists():
-            raise FileNotFoundError(
-                f"MDS do período anterior não encontrado: {mds_path}"
-            )
+            raise FileNotFoundError(f"MDS anterior não encontrado: {mds_path}")
 
-        # -------------------------------------------------
-        # 3. Abrir MDS do período anterior
-        # -------------------------------------------------
         import rasterio
         import numpy as np
         import pyarrow as pa
         from rasterio.transform import rowcol
+        from scipy.ndimage import uniform_filter
 
+        # -------------------------------------------------
+        # 3. Leitura do MDS anterior
+        # -------------------------------------------------
         with rasterio.open(mds_path) as src:
-            Z_mds = src.read(1).astype("float32")
+            Z = src.read(1).astype("float32")
             transform = src.transform
             nodata = src.nodata
-            height, width = Z_mds.shape
+            H, W = Z.shape
+
+        valid_raster = np.ones_like(Z, dtype=bool)
+        if nodata is not None:
+            valid_raster &= Z != nodata
 
         # -------------------------------------------------
-        # 4. Coordenadas reais dos pontos atuais
+        # 4. Passa-alta local (3x3 ≈ 1.5 m)
         # -------------------------------------------------
-        # ⚠️ Usa offsets salvos na normalização
+        Z_lp = uniform_filter(Z, size=3, mode="nearest")
+        HP = Z - Z_lp
+
+        HP[~valid_raster] = np.nan
+
+        # -------------------------------------------------
+        # 5. Coordenadas reais dos pontos atuais
+        # -------------------------------------------------
         meta = getattr(self, "meta", {})
         offsets = meta.get("offsets")
+        q = meta.get("quantization")
 
-        if offsets is None:
-            raise RuntimeError(
-                "Offsets não encontrados. Delta exige calc_flaz() com normalização."
-            )
+        if offsets is None or q is None:
+            raise RuntimeError("Delta exige offsets e quantização (calc_flaz).")
 
-        q = meta.get("quantization", None)
-        if q is None:
-            raise RuntimeError("Quantização não encontrada no meta.")
-
-        # coordenadas normalizadas (int)
         xs = self.table["x"].to_numpy(zero_copy_only=False)
         ys = self.table["y"].to_numpy(zero_copy_only=False)
         zs = self.table["z"].to_numpy(zero_copy_only=False)
 
-        # reconstrói coordenadas reais (metros)
         x_real = xs * q + offsets["xmin"]
         y_real = ys * q + offsets["ymin"]
         z_real = zs * q + offsets["zmin"]
 
         # -------------------------------------------------
-        # 5. Lookup raster (ponto -> MDS)
+        # 6. Lookup raster (ponto → MDS)
         # -------------------------------------------------
         delta_z = np.full(len(z_real), np.nan, dtype="float32")
+        hp_ref = np.full(len(z_real), np.nan, dtype="float32")
 
         rows, cols = rowcol(transform, x_real, y_real)
 
         valid = (
-            (rows >= 0) & (rows < height) &
-            (cols >= 0) & (cols < width)
+            (rows >= 0) & (rows < H) &
+            (cols >= 0) & (cols < W)
         )
 
-        rows_v = rows[valid]
-        cols_v = cols[valid]
+        idx = np.where(valid)[0]
+        r = rows[valid]
+        c = cols[valid]
 
-        z_ref = Z_mds[rows_v, cols_v]
+        z_ref = Z[r, c]
+        hp_ref_vals = HP[r, c]
 
         if nodata is not None:
             ok = z_ref != nodata
-            idx = np.where(valid)[0][ok]
-            delta_z[idx] = z_real[idx] - z_ref[ok]
-        else:
-            idx = np.where(valid)[0]
-            delta_z[idx] = z_real[idx] - z_ref
+            idx = idx[ok]
+            z_ref = z_ref[ok]
+            hp_ref_vals = hp_ref_vals[ok]
+
+        delta_z[idx] = z_real[idx] - z_ref
+        hp_ref[idx] = hp_ref_vals
 
         # -------------------------------------------------
-        # 6. Normalização divergente com zona morta
+        # 7. Compatibilidade por sinal + zona morta
         # -------------------------------------------------
+        T = deadzone_m
+
         valid_delta = ~np.isnan(delta_z)
+        delta_f = np.full(len(delta_z), np.nan, dtype="float32")
 
-        if valid_delta.sum() == 0:
-            raise RuntimeError("Delta inválido: nenhum valor válido calculado.")
+        for i in np.where(valid_delta)[0]:
+            dz = delta_z[i]
+            dhp = hp_ref[i]
 
-        dmin = float(np.nanmin(delta_z))
-        dmax = float(np.nanmax(delta_z))
+            if abs(dz) < T:
+                continue
 
-        T = deadzone_m  # zona neutra (ex: 1.0 m)
+            if np.isnan(dhp):
+                continue
 
-        # separa negativos e positivos
-        neg = delta_z < -T
-        pos = delta_z > T
-        neu = (~neg) & (~pos)
+            # compatibilidade simples por sinal
+            if np.sign(dz) == np.sign(dhp):
+                delta_f[i] = dz
 
-        delta_colormap = np.full(len(delta_z), 127, dtype="uint8")  # cinza neutro
+        if np.all(np.isnan(delta_f)):
+            raise RuntimeError("Delta inválido: nenhum valor compatível.")
 
-        # --- negativos (127 → 0)
+        # -------------------------------------------------
+        # 8. Normalização divergente (uint8)
+        # -------------------------------------------------
+        dmin = float(np.nanmin(delta_f))
+        dmax = float(np.nanmax(delta_f))
+
+        neg = delta_f < -T
+        pos = delta_f > T
+
+        delta_colormap = np.full(len(delta_f), 127, dtype="uint8")
+
         if np.any(neg):
-            neg_vals = delta_z[neg]
-            nmin = float(neg_vals.min())   # mais negativo
+            nmin = float(delta_f[neg].min())
             nmax = -T
-
             if nmin < nmax:
                 delta_colormap[neg] = (
-                    127 * (neg_vals - nmax) / (nmin - nmax)
+                    127 * (delta_f[neg] - nmax) / (nmin - nmax)
                 ).astype("uint8")
 
-        # --- positivos (127 → 255)
         if np.any(pos):
-            pos_vals = delta_z[pos]
             pmin = T
-            pmax = float(pos_vals.max())
-
+            pmax = float(delta_f[pos].max())
             if pmax > pmin:
                 delta_colormap[pos] = (
-                    127 + 128 * (pos_vals - pmin) / (pmax - pmin)
+                    127 + 128 * (delta_f[pos] - pmin) / (pmax - pmin)
                 ).astype("uint8")
 
-
         # -------------------------------------------------
-        # 7. Tabela Arrow escalar
+        # 9. Arrow escalar
         # -------------------------------------------------
         self.delta_table = pa.Table.from_pydict(
             {
@@ -1009,7 +1023,7 @@ class Favela:
         )
 
         # -------------------------------------------------
-        # 8. Estatísticas (para card / debug)
+        # 10. Estatísticas (FVIZ / card)
         # -------------------------------------------------
         self.delta_stats = {
             "ref": f"{ano_anterior}-{ano_atual}",
@@ -1019,6 +1033,7 @@ class Favela:
             "unit": "m",
             "mode": "divergent",
             "zero_ref": 0.0,
+            "filter": "highpass_3x3",
         }
 
         return self
