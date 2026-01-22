@@ -294,11 +294,11 @@ class Favela:
                 self._write_vvv_arrow(vvv_path)
 
             # Delta
-            if hasattr(self, "delta_table"):
+            if hasattr(self, "delta_vis_table"):
                 delta_path = per_dir / "delta_flaz.arrow"
                 with pa.OSFile(delta_path.as_posix(), "wb") as f:
-                    with ipc.RecordBatchFileWriter(f, self.delta_table.schema) as writer:
-                        writer.write_table(self.delta_table)
+                    with ipc.RecordBatchFileWriter(f, self.delta_vis_table.schema) as writer:
+                        writer.write_table(self.delta_vis_table)
 
             # (futuro)
             # if hasattr(self, "mds"):
@@ -1118,20 +1118,34 @@ class Favela:
         # ----------------------------------------
         # Loop principal
         # ----------------------------------------
+        # delta = np.full(len(ZA), np.nan, dtype="float32")
+
+        # for i, (x, y) in enumerate(pts_A):
+        #     idx_A = tree_A.query_ball_point([x, y], r)
+        #     idx_B = tree_B.query_ball_point([x, y], r)
+
+        #     if len(idx_A) < min_vizinhos or len(idx_B) < min_vizinhos:
+        #         continue
+
+        #     zA = ZA[idx_A]
+        #     zB = ZB[idx_B]
+
+        #     # 🔧 delta em METROS
+        #     delta[i] = (reducer(zA) - reducer(zB)) * q
+
+        neighbors_A = tree_A.query_ball_tree(tree_A, r)
+        neighbors_B = tree_A.query_ball_tree(tree_B, r)
+
         delta = np.full(len(ZA), np.nan, dtype="float32")
 
-        for i, (x, y) in enumerate(pts_A):
-            idx_A = tree_A.query_ball_point([x, y], r)
-            idx_B = tree_B.query_ball_point([x, y], r)
+        for i in range(len(ZA)):
+            idx_A = neighbors_A[i]
+            idx_B = neighbors_B[i]
 
             if len(idx_A) < min_vizinhos or len(idx_B) < min_vizinhos:
                 continue
 
-            zA = ZA[idx_A]
-            zB = ZB[idx_B]
-
-            # 🔧 delta em METROS
-            delta[i] = (reducer(zA) - reducer(zB)) * q
+            delta[i] = (np.median(ZA[idx_A]) - np.median(ZB[idx_B])) * q
 
 
         # ----------------------------------------
@@ -1142,6 +1156,91 @@ class Favela:
                 "delta_colormap": pa.array(delta, type=pa.float32())
             }
         )
+
+        return self
+
+    def calc_delta_visualizacao(
+        self,
+        deadzone_m: float = 0.5,
+    ):
+        """
+        Gera o artefato visual do delta morfológico.
+
+        - Entrada: self.delta_table (float32, metros)
+        - Saída:
+            - self.delta_vis_table (uint8)
+            - self.delta_stats (metadados físicos)
+
+        ⚠️ NÃO recalcula o delta científico.
+        """
+
+        import numpy as np
+        import pyarrow as pa
+
+        if not hasattr(self, "delta_table"):
+            raise RuntimeError(
+                "Execute calc_delta() antes de calc_delta_visualizacao()."
+            )
+
+        delta = self.delta_table["delta_colormap"].to_numpy(
+            zero_copy_only=False
+        ).astype("float32")
+
+        valid = ~np.isnan(delta)
+        if valid.sum() == 0:
+            raise RuntimeError("Delta visual inválido: nenhum valor válido.")
+
+        # ----------------------------------------
+        # Estatísticas físicas
+        # ----------------------------------------
+        dmin = float(delta[valid].min())
+        dmax = float(delta[valid].max())
+
+        # ----------------------------------------
+        # Normalização divergente (uint8)
+        # ----------------------------------------
+        T = deadzone_m  # zona morta opcional
+
+        cmap = np.full(len(delta), 127, dtype="uint8")
+
+        neg = delta < -T
+        pos = delta > T
+
+        if np.any(neg):
+            nmin = float(delta[neg].min())
+            if nmin < -T:
+                cmap[neg] = (
+                    127 * (delta[neg] + T) / (nmin + T)
+                ).astype("uint8")
+
+        if np.any(pos):
+            pmax = float(delta[pos].max())
+            if pmax > T:
+                cmap[pos] = (
+                    127 + 128 * (delta[pos] - T) / (pmax - T)
+                ).astype("uint8")
+
+        # ----------------------------------------
+        # Arrow VISUAL (uint8)
+        # ----------------------------------------
+        self.delta_vis_table = pa.Table.from_pydict(
+            {
+                "delta_colormap": pa.array(cmap, type=pa.uint8())
+            }
+        )
+
+        # ----------------------------------------
+        # Stats para o FVIZ
+        # ----------------------------------------
+        self.delta_stats = {
+            "ref": f"{self._ano}",
+            "min": dmin,
+            "max": dmax,
+            "unit": "m",
+            "mode": "divergent",
+            "zero_ref": 0.0,
+            "deadzone_m": deadzone_m,
+        }
 
         return self
 
