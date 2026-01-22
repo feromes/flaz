@@ -834,7 +834,7 @@ class Favela:
 
         return self
 
-    def calc_delta(self, force_recalc: bool = False, deadzone_m: float = 0.60):
+    def calc_delta_DEPRECATED(self, force_recalc: bool = False, deadzone_m: float = 0.60):
         """
         Delta morfológico (versão passa-alta local).
 
@@ -1037,6 +1037,208 @@ class Favela:
         }
 
         return self
+
+    def calc_delta(
+        self,
+        ano_ref: int,
+        raio_m: float = 1.0,
+        min_vizinhos: int = 5,
+        stat: str = "median",
+    ):
+        """
+        Calcula o delta morfológico local em Z entre dois anos.
+
+        Delta = stat(Z_ref_vizinhos) - stat(Z_prev_vizinhos)
+
+        Resultado:
+            self.delta_table com coluna:
+                - delta_colormap : float32
+        """
+
+        import numpy as np
+        import pyarrow as pa
+        from scipy.spatial import cKDTree
+
+        # ----------------------------------------
+        # Validações
+        # ----------------------------------------
+        if self._ano is None:
+            raise RuntimeError("Ano atual não definido. Use .periodo(ano).")
+
+        ano_atual = self._ano
+        ano_prev = ano_ref
+
+        if ano_atual == ano_prev:
+            raise ValueError("Ano atual e ano de referência não podem ser iguais.")
+
+        meta = getattr(self, "meta", {})
+        q = meta.get("quantization")
+        if q is None:
+            raise RuntimeError("Quantization não encontrado.")
+
+        # ----------------------------------------
+        # Carrega tabela atual (já em self.table)
+        # ----------------------------------------
+        table_A = self.table
+        XA = table_A["x"].to_numpy()
+        YA = table_A["y"].to_numpy()
+        ZA = table_A["z"].to_numpy()
+
+        # ----------------------------------------
+        # Carrega tabela do ano anterior
+        # ----------------------------------------
+        table_B = self._load_arrow_for_year(ano_prev)
+
+        XB = table_B["x"].to_numpy()
+        YB = table_B["y"].to_numpy()
+        ZB = table_B["z"].to_numpy()
+
+        # ----------------------------------------
+        # KDTree 2D
+        # ----------------------------------------
+        pts_A = np.column_stack([XA, YA])
+        pts_B = np.column_stack([XB, YB])
+
+        tree_A = cKDTree(pts_A)
+        tree_B = cKDTree(pts_B)
+
+        # raio em unidades normalizadas
+        r = raio_m / q
+
+        # ----------------------------------------
+        # Função estatística
+        # ----------------------------------------
+        if stat == "median":
+            reducer = np.median
+        elif stat == "mean":
+            reducer = np.mean
+        else:
+            raise ValueError(f"Estatística inválida: {stat}")
+
+        # ----------------------------------------
+        # Loop principal
+        # ----------------------------------------
+        delta = np.full(len(ZA), np.nan, dtype="float32")
+
+        for i, (x, y) in enumerate(pts_A):
+            idx_A = tree_A.query_ball_point([x, y], r)
+            idx_B = tree_B.query_ball_point([x, y], r)
+
+            if len(idx_A) < min_vizinhos or len(idx_B) < min_vizinhos:
+                continue
+
+            zA = ZA[idx_A]
+            zB = ZB[idx_B]
+
+            # 🔧 delta em METROS
+            delta[i] = (reducer(zA) - reducer(zB)) * q
+
+
+        # ----------------------------------------
+        # Salva resultado
+        # ----------------------------------------
+        self.delta_table = pa.Table.from_pydict(
+            {
+                "delta_colormap": pa.array(delta, type=pa.float32())
+            }
+        )
+
+        return self
+
+    def export_delta_laz(self, force: bool = False):
+        """
+        Exporta o delta como COPC LAZ com Extra Byte:
+            delta_z : float32
+
+        Coordenadas em EPSG:31983 (originais do levantamento)
+        """
+
+        import laspy
+        import numpy as np
+
+        if not hasattr(self, "api_path"):
+            raise RuntimeError("api_path não definido. Use set_api_path().")
+
+        if self._ano is None:
+            raise RuntimeError("Ano não definido. Use .periodo(ano).")
+
+        if not hasattr(self, "delta_table"):
+            raise RuntimeError("Execute calc_delta() antes de exportar.")
+
+        if not hasattr(self, "table"):
+            raise RuntimeError("Tabela base não encontrada.")
+
+        meta = getattr(self, "meta", {})
+        offsets = meta.get("offsets")
+        q = meta.get("quantization")
+
+        if offsets is None or q is None:
+            raise RuntimeError("Offsets ou quantization ausentes.")
+
+        # -----------------------------
+        # Reconstrução XYZ reais
+        # -----------------------------
+        xs = self.table["x"].to_numpy(zero_copy_only=False)
+        ys = self.table["y"].to_numpy(zero_copy_only=False)
+        zs = self.table["z"].to_numpy(zero_copy_only=False)
+
+        x_real = xs * q + offsets["xmin"]
+        y_real = ys * q + offsets["ymin"]
+        z_real = zs * q + offsets["zmin"]
+
+        # -----------------------------
+        # Delta real (float32)
+        # -----------------------------
+        delta = self.delta_table["delta_colormap"].to_numpy(
+            zero_copy_only=False
+        ).astype("float32")
+
+        valid = ~np.isnan(delta)
+
+        x_real = x_real[valid]
+        y_real = y_real[valid]
+        z_real = z_real[valid]
+        delta = delta[valid]
+
+        # -----------------------------
+        # Cabeçalho LAS
+        # -----------------------------
+        header = laspy.LasHeader(point_format=3, version="1.4")
+        header.add_extra_dim(
+            laspy.ExtraBytesParams(
+                name="delta_z",
+                type=np.float32,
+                description="Morphological delta Z (m)",
+            )
+        )
+
+        from pyproj import CRS
+        header.add_crs(CRS.from_epsg(31983))
+
+        las = laspy.LasData(header)
+
+        las.x = x_real
+        las.y = y_real
+        las.z = z_real
+        las.delta_z = delta
+
+        # -----------------------------
+        # Escrita
+        # -----------------------------
+        out_dir = self.periodo_dir(self._ano)
+        out_dir.mkdir(parents=True, exist_ok=True)
+
+        out_path = out_dir / "delta_flaz.copc.laz"
+
+        # -----------------------------
+        # Controle de sobrescrita
+        # -----------------------------
+        if out_path.exists() and not force:
+            return out_path
+
+        las.write(out_path)
+
+        return out_path
 
     def quadriculas_laz(self):
 
@@ -1794,6 +1996,28 @@ class Favela:
             json.dumps(meta, indent=2, ensure_ascii=False),
             encoding="utf-8"
         )
+
+    def _load_arrow_for_year(self, ano: int) -> pa.Table:
+        """
+        Carrega o flaz.arrow de um determinado ano
+        sem alterar o estado atual da instância.
+        """
+
+        import pyarrow as pa
+        import pyarrow.ipc as ipc
+
+        arrow_path = self.periodo_dir(ano) / "flaz.arrow"
+
+        if not arrow_path.exists():
+            raise FileNotFoundError(
+                f"Arquivo flaz.arrow não encontrado para o ano {ano}: {arrow_path}"
+            )
+
+        with pa.memory_map(arrow_path.as_posix(), "r") as source:
+            reader = ipc.RecordBatchFileReader(source)
+            table = reader.read_all()
+
+        return table
 
     def _write_hag_arrow(self, dest: Path):
         if not hasattr(self, "hag_table"):
