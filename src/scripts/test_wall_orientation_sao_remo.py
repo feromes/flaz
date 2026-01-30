@@ -21,6 +21,19 @@ def main():
     period_dir = f.periodo_dir(2017)
     print(f"📁 Diretório: {period_dir}")
 
+    # -------------------------------------------------
+    # 🔑 PASSO 0 — garantir que a base LiDAR existe
+    # -------------------------------------------------
+    print("⚙️  Garantindo base LiDAR (wall candidates incluídos)...")
+
+    f._build_favela_lidar_base(
+        out_dir=period_dir,
+        force=False  # coloque True se quiser recriar tudo
+    )
+
+    # -------------------------------------------------
+    # Caminhos esperados
+    # -------------------------------------------------
     wall_path = period_dir / "wall_candidates_025.tif"
     orient_path = period_dir / "wall_orientation_025.tif"
     coh_path = period_dir / "wall_coherence_025.tif"
@@ -46,12 +59,11 @@ def main():
     # -------------------------------------------------
     # 2. Subamostragem para setas
     # -------------------------------------------------
-    step = 10  # controla densidade das setas
+    step = 10
     ys, xs = np.mgrid[0:walls.shape[0]:step, 0:walls.shape[1]:step]
 
     theta = orientation[ys, xs]
 
-    # vetor unitário
     u = np.cos(theta)
     v = np.sin(theta)
 
