@@ -1,0 +1,11 @@
+ID,Settlement,Total VVV length (km),VVV length density (km/ha),Number of segments,Segment density (segments/ha),Mean path width (m),"Path width variability (SD, m)"
+H,Parque Cocaia II,0.6,1.48,44,111.56,3.11,1.1
+I,Parque Cocaia III,1.1,1.41,70,87.27,3.16,1.33
+B,Cocaia I,11.8,1.3,854,94.04,4.59,3.32
+C,Futuro Melhor,8.0,1.28,651,103.91,3.18,1.62
+A,Abacateiro,6.4,1.22,530,101.52,3.35,1.73
+E,Heliópolis - Viela Das Gaivotas,3.1,1.09,192,67.95,3.35,1.91
+F,Heliópolis L2 (Atílio Bartalini),0.7,0.99,18,24.61,7.11,5.06
+G,Paraisópolis,74.7,0.95,6264,79.48,3.66,3.15
+J,São Remo,7.7,0.93,659,79.75,3.14,1.87
+D,Heliópolis,51.9,0.83,3844,61.58,3.44,2.28

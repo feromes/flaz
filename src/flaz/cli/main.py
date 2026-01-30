@@ -2,8 +2,9 @@ import typer
 from pathlib import Path
 import warnings
 import json
-
+import pandas as pd
 import geopandas as gpd
+from datetime import datetime
 
 from flaz import Favela, Favelas
 
@@ -291,6 +292,188 @@ def calc_h3(
     typer.echo(f"🗺️ GeoJSON salvo em: {geojson_path}")
     typer.echo(f"🧊 Hex JSON salvo em: {hexjson_path}")
     typer.echo(f"🔗 Índice H3→Favelas salvo em: {index_path}")
+
+@app.command("process-vielas")
+def process_vielas(
+    ano: int = typer.Option(..., "--ano", "-a", help="Ano de referência"),
+    out: str = typer.Option(
+        "./artigos/vielas/insumos",
+        "--out",
+        help="Diretório de saída dos insumos do artigo",
+    ),
+    force: bool = typer.Option(False, "--force", help="Ignora cache"),
+):
+    """
+    Processa TODAS as favelas para gerar insumos do artigo de vielas:
+    - extração vetorial das vielas
+    - estatísticas morfológicas
+    - camadas consolidadas para mapas e tabelas
+    """
+
+    # --------------------------------------------------
+    # Diretório raiz (atua como api_path científico)
+    # --------------------------------------------------
+    out_dir = Path(out).expanduser().resolve()
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    api_path = out_dir  # 🔑 contrato do Favela
+
+    typer.echo(f"📁 Diretório de saída: {out_dir}")
+    typer.echo(f"📅 Ano: {ano}")
+
+    # --------------------------------------------------
+    # Estrutura do artigo
+    # --------------------------------------------------
+    meta_dir = out_dir / "meta"
+    mapas_dir = out_dir / "mapas"
+    por_favela_dir = out_dir / "por_favela"
+    tabelas_dir = out_dir / "tabelas"
+
+    for d in [meta_dir, mapas_dir, por_favela_dir, tabelas_dir]:
+        d.mkdir(exist_ok=True)
+
+    favelas = Favelas()
+    typer.echo(f"🏘️ Processando {len(favelas)} favelas")
+
+    all_vielas = []
+    resumo_rows = []
+    favelas_gdf = []
+
+    # --------------------------------------------------
+    # LOOP PRINCIPAL (espelha calc_more)
+    # --------------------------------------------------
+    for f in favelas:
+        typer.echo(f"\n→ {f.nome}")
+
+        # -----------------------------
+        # Configuração canônica FLAZ
+        # -----------------------------
+        f.set_api_path(api_path)
+        f.periodo(ano)
+
+        # -----------------------------
+        # Base LiDAR (COPC, MDT, MDS…)
+        # -----------------------------
+        typer.echo("  • Base LiDAR")
+        f._build_favela_lidar_base(
+            out_dir=f.periodo_dir(),   # 🔑 caminho correto
+            force=force,
+        )
+
+        # -----------------------------
+        # Núcleo FLAZ
+        # -----------------------------
+        typer.echo("  • calc_flaz")
+        f.calc_flaz(force_recalc=force)
+
+        typer.echo("  • calc_via_viela_vazio")
+        f.calc_via_viela_vazio(force_recalc=force)
+
+        # ==================================================
+        # A PARTIR DAQUI: PRODUTOS DO ARTIGO
+        # ==================================================
+        fav_out = por_favela_dir / f.nome_normalizado()
+        fav_out.mkdir(exist_ok=True)
+
+        # -----------------------------
+        # Vielas vetoriais
+        # -----------------------------
+        gdf_vielas = f.calc_vielas_vector()
+
+        gdf_vielas.to_file(
+            fav_out / "vielas.gpkg",
+            driver="GPKG"
+        )
+
+        # -----------------------------
+        # Estatísticas
+        # -----------------------------
+        stats = {
+            "favela": f.nome,
+            "favela_id": f.nome_normalizado(),
+            "n_vielas": int(len(gdf_vielas)),
+            "comprimento_total_m": float(gdf_vielas.length_m.sum()),
+            "largura_media_m": float(gdf_vielas.mean_width_m.mean()),
+        }
+
+        (fav_out / "stats.json").write_text(
+            json.dumps(stats, indent=2, ensure_ascii=False),
+            encoding="utf-8"
+        )
+
+        resumo_rows.append(stats)
+
+        # acumula global
+        gdf_vielas["favela"] = f.nome
+        gdf_vielas["favela_id"] = f.nome_normalizado()
+        all_vielas.append(gdf_vielas)
+
+        # geometria da favela (mapas)
+        favelas_gdf.append(
+            {
+                "favela": f.nome,
+                "favela_id": f.nome_normalizado(),
+                "geometry": f.geometry,
+            }
+        )
+
+    # --------------------------------------------------
+    # Consolidação global
+    # --------------------------------------------------
+    import pandas as pd
+    typer.echo("\n📦 Consolidando camadas globais")
+
+    if all_vielas:
+        gdf_all = gpd.GeoDataFrame(
+            pd.concat(all_vielas, ignore_index=True),
+            crs=all_vielas[0].crs,
+        )
+        gdf_all.to_file(
+            mapas_dir / "vielas_todas.gpkg",
+            driver="GPKG"
+        )
+
+    gdf_favelas = gpd.GeoDataFrame(
+        favelas_gdf,
+        crs=favelas[0].crs,
+    )
+    gdf_favelas.to_file(
+        mapas_dir / "favelas.gpkg",
+        driver="GPKG"
+    )
+
+    # --------------------------------------------------
+    # Tabelas CSV
+    # --------------------------------------------------
+    import pandas as pd
+
+    df_resumo = pd.DataFrame(resumo_rows)
+    df_resumo.to_csv(
+        tabelas_dir / "resumo_vielas_por_favela.csv",
+        index=False,
+    )
+
+    # --------------------------------------------------
+    # Metadados
+    # --------------------------------------------------
+    meta = {
+        "ano": ano,
+        "n_favelas": len(favelas),
+        "data_execucao": datetime.now().isoformat(),
+        "artefatos": {
+            "mapas": "mapas/",
+            "por_favela": "por_favela/",
+            "tabelas": "tabelas/",
+        },
+    }
+
+    (meta_dir / "processamento.json").write_text(
+        json.dumps(meta, indent=2, ensure_ascii=False),
+        encoding="utf-8"
+    )
+
+    typer.echo("\n✅ Processamento de vielas concluído com sucesso!")
+
 
 if __name__ == "__main__":
     app()

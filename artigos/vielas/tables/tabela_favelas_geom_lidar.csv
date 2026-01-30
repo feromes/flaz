@@ -1,0 +1,11 @@
+id,favela_id,favela,area_m2,area_ha,lidar_points,lidar_density_pt_m2,mds_min_m,mds_max_m,mds_range_m
+G,paraisopolis,Paraisópolis,788093.8,78.81,13134805,16.67,753.84,911.28,157.44
+D,heliopolis,Heliópolis,624214.9,62.42,10473831,16.78,733.23,842.56,109.33
+B,cocaia_i,Cocaia I,90813.1,9.08,1392615,15.33,744.97,831.84,86.87
+J,sao_remo,São Remo,82629.2,8.26,1460372,17.67,726.41,793.0,66.59
+C,futuro_melhor,Futuro Melhor,62649.3,6.26,1339568,21.38,742.86,830.82,87.96
+A,abacateiro,Abacateiro,52204.8,5.22,836388,16.02,737.74,782.38,44.64
+E,heliopolis_-_viela_das_gaivotas,Heliópolis - Viela Das Gaivotas,28255.7,2.83,481068,17.03,731.29,792.92,61.64
+I,parque_cocaia_iii,Parque Cocaia III,8021.1,0.8,117218,14.61,752.25,780.85,28.6
+F,heliopolis_l2_(atilio_bartalini),Heliópolis L2 (Atílio Bartalini),7312.6,0.73,143422,19.61,735.96,766.13,30.17
+H,parque_cocaia_ii,Parque Cocaia II,3944.0,0.39,57444,14.56,760.63,786.76,26.13

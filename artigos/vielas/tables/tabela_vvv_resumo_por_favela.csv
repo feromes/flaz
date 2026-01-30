@@ -1,0 +1,11 @@
+id,favela_id,favela,vvv_length_m,vvv_segments,vvv_length_km_per_ha,vvv_segments_per_ha,mean_width_m_avg,mean_width_m_std
+H,parque_cocaia_ii,Parque Cocaia II,583.9,44,1.48,111.56,3.11,1.1
+I,parque_cocaia_iii,Parque Cocaia III,1127.7,70,1.406,87.27,3.16,1.33
+B,cocaia_i,Cocaia I,11840.4,854,1.304,94.04,4.59,3.32
+C,futuro_melhor,Futuro Melhor,8011.0,651,1.279,103.91,3.18,1.62
+A,abacateiro,Abacateiro,6379.7,530,1.222,101.52,3.35,1.73
+E,heliopolis_-_viela_das_gaivotas,Heliópolis - Viela Das Gaivotas,3091.5,192,1.094,67.95,3.35,1.91
+F,heliopolis_l2_(atilio_bartalini),Heliópolis L2 (Atílio Bartalini),725.9,18,0.993,24.61,7.11,5.06
+G,paraisopolis,Paraisópolis,74725.5,6264,0.948,79.48,3.66,3.15
+J,sao_remo,São Remo,7718.1,659,0.934,79.75,3.14,1.87
+D,heliopolis,Heliópolis,51913.7,3844,0.832,61.58,3.44,2.28
