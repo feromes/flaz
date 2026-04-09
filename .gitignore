@@ -12,5 +12,7 @@ src/flaz/data/*.gpkg-*
 flaz_api/
 figures_footpath/
 artigos/vielas/insumos/
+*.tsv
+dinamica_favelas/
 
 
